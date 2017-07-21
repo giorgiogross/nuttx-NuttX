@@ -109,6 +109,27 @@
 #define GPIO_UART4_RX GPIO_UART4_RX_1
 #define GPIO_UART4_TX GPIO_UART4_TX_1
 
+/* SPSGRF
+ *
+ * -------- ----------------------- ----------------
+ * SPSGRF   Board Signal            STM32L4 pin
+ * -------- ----------------------- ----------------
+ * SPI_CLK  INTERNAL-SPI3_SCK       PC10 SPI3_SCK
+ * SPI_MISO INTERNAL-SPI3_MISO      PC11 SPI3_MISO
+ * SPI_MOSI INTERNAL-SPI3_MOSI      PC12 SPI3_MOSI
+ * SPI_CS   SPSGRF-915-SPI3_CSN     PB5  GPIO_Output
+ * GPIO(3)  SPSGRF-915-GPIO3_EXTI5  PE5  GPIO_EXTI5
+ * GPIO(2)  N/C                     N/A
+ * GPIO(1)  N/C                     N/A
+ * GPIO(0)  N/C                     N/A
+ * SDN      SPSGRF-915-SDN          PB15 GPIO_Output
+ * -------- ----------------------- ----------------
+ */
+
+#define GPIO_SPI3_SCK  GPIO_SPI3_SCK_2
+#define GPIO_SPI3_MISO GPIO_SPI3_MISO_2
+#define GPIO_SPI3_MOSI GPIO_SPI3_MOSI_2
+
 /************************************************************************************
  * Public Data
  ************************************************************************************/

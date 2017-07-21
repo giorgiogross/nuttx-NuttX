@@ -50,13 +50,6 @@
 /* The spirit1 provides interrupts to the MCU via a GPIO pin.  The
  * following structure provides an MCU-independent mechanixm for controlling
  * the spirit1 GPIO interrupt.
- *
- * The spirit1 interrupt is an active low, *level* interrupt. From Datasheet:
- * "Note 1: The INTEDGE polarity defaults to: 0 = Falling Edge. Ensure that
- *  the interrupt polarity matches the interrupt pin polarity of the host
- *  microcontroller.
- * "Note 2: The INT pin will remain high or low, depending on INTEDGE polarity
- *  setting, until INTSTAT register is read."
  */
 
 struct spirit1_lower_s
@@ -64,8 +57,6 @@ struct spirit1_lower_s
   int  (*attach)(FAR const struct spirit1_lower_s *lower, xcpt_t handler,
                 FAR void *arg);
   void (*enable)(FAR const struct spirit1_lower_s *lower, bool state);
-  void (*slptr)(FAR const struct spirit1_lower_s *lower, bool state);
-  void (*reset)(FAR const struct spirit1_lower_s *lower, bool state);
 };
 
 #ifdef __cplusplus
