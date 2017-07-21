@@ -109,6 +109,67 @@ struct spirit1_dev_s
 };
 
 /****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: spirit1_irqworker
+ *
+ * Description:
+ *   Actual thread to handle the irq outside of privaleged mode.
+ *
+ ****************************************************************************/
+
+static void spirit1_irqworker(FAR void *arg)
+{
+  FAR struct spirit1_dev_s *dev = (FAR struct spirit1_dev_s *)arg;
+  uint8_t status = 0;
+
+  wlinfo("Status: 0x%02X\n", status);
+  UNUSED(status);
+
+  /* Process the Spirit1 interrupt */
+
+  /* Re-enable the interrupt. */
+
+  dev->lower->enable(dev->lower, true);
+}
+
+/****************************************************************************
+ * Name: spirit1_interrupt
+ *
+ * Description:
+ *   Actual interrupt handler ran inside privileged space.
+ *
+ ****************************************************************************/
+
+static int spirit1_interrupt(int irq, FAR void *context, FAR void *arg)
+{
+  FAR struct spirit1_dev_s *dev = (FAR struct spirit1_dev_s *)arg;
+
+  DEBUGASSERT(dev != NULL);
+
+  /* In complex environments, we cannot do SPI transfers from the interrupt
+   * handler because semaphores are probably used to lock the SPI bus.  In
+   * this case, we will defer processing to the worker thread.  This is also
+   * much kinder in the use of system resources and is, therefore, probably
+   * a good thing to do in any event.
+   */
+
+  DEBUGASSERT(work_available(&dev->irqwork));
+
+  /* Notice that further GPIO interrupts are disabled until the work is
+   * actually performed.  This is to prevent overrun of the worker thread.
+   * Interrupts are re-enabled in enc_irqworker() when the work is completed.
+   */
+
+  dev->lower->enable(dev->lower, false);
+
+  return work_queue(HPWORK, &dev->irqwork, spirit1_irqworker,
+                    (FAR void *)dev, 0);
+}
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
@@ -130,7 +191,7 @@ FAR struct ieee802154_radio_s *spirit1_init(FAR struct spi_dev_s *spi,
   dev = (FAR struct spirit1_dev_s *)kmm_zalloc(sizeof(struct spirit1_dev_s));
   if (dev == NULL)
    {
-      werr("ERROR: Failed to allocate device structure\n);
+      wlerr("ERROR: Failed to allocate device structure\n");
    }
 
   /* Attach the interface, lower driver, and devops */
@@ -146,8 +207,8 @@ FAR struct ieee802154_radio_s *spirit1_init(FAR struct spi_dev_s *spi,
       return NULL;
     }
 
-  sem_init(&dev->ieee.rxsem, 0, 0);
-  sem_init(&dev->ieee.txsem, 0, 0);
+  //sem_init(&dev->ieee.rxsem, 0, 0);
+  //sem_init(&dev->ieee.txsem, 0, 0);
 
   /* Initialize device */
 
