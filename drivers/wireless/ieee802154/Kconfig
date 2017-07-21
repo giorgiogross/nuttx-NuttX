@@ -21,4 +21,13 @@ config IEEE802154_AT86RF233
 
 source drivers/wireless/ieee802154/at86rf23x/Kconfig
 
+config IEEE802154_SPIRIT1
+	bool "STMicro Spirit1-based transceiver module"
+	default n
+	select WL_SPIRIT
+	---help---
+		This selection enables support for the TMicro Spirit1-based device.
+
+source drivers/wireless/ieee802154/spirit1/Kconfig
+
 endif # DRIVERS_IEEE802154

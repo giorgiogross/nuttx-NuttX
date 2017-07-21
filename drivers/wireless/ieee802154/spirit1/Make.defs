@@ -1,7 +1,7 @@
 ############################################################################
-# drivers/ieee802154/Make.defs
+# drivers/ieee802154/spirit1/Make.defs
 #
-#   Copyright (C) 2016-2017 Gregory Nutt. All rights reserved.
+#   Copyright (C) 2017 Gregory Nutt. All rights reserved.
 #   Author: Gregory Nutt <gnutt@nuttx.org>
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,22 +33,17 @@
 #
 ############################################################################
 
-# Include nothing if IEEE 802.15.4 is disabled
+# Include Spirit1 drivers into the build
 
-ifeq ($(CONFIG_DRIVERS_IEEE802154),y)
+ifeq ($(CONFIG_IEEE802154_SPIRIT1),y)
 
-# Include common IEEE 802.15.4 files into the build
+CSRCS += spirit1.c
 
-# Include IEEE 802.15.4 drivers into the build
+# Include Spirit1 build support
 
-include wireless$(DELIM)ieee802154$(DELIM)mrf24j40$(DELIM)Make.defs
-include wireless$(DELIM)ieee802154$(DELIM)at86rf23x$(DELIM)Make.defs
-include wireless$(DELIM)ieee802154$(DELIM)spirit1$(DELIM)Make.defs
+DEPPATH += --dep-path wireless$(DELIM)ieee802154$(DELIM)spirit1
+VPATH += :wireless$(DELIM)ieee802154$(DELIM)spirit1
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" \
+  $(TOPDIR)$(DELIM)drivers$(DELIM)wireless$(DELIM)ieee802154$(DELIM)spirit1}
 
-# Include common IEEE 802.15.4 build support
-
-DEPPATH += --dep-path wireless$(DELIM)ieee802154
-VPATH += :wireless$(DELIM)ieee802154
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(TOPDIR)$(DELIM)drivers$(DELIM)wireless$(DELIM)ieee802154}
-
-endif # CONFIG_DRIVERS_IEEE802154
+endif # CONFIG_IEEE802154_SPIRIT1
