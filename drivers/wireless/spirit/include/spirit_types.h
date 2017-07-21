@@ -39,7 +39,7 @@
 
 /* This module provide some types definitions which will be used in
  * all the modules of this library. Here is defined also the global
- * variable priv->state which contains the status of Spirit and
+ * variable spirit->state which contains the status of Spirit and
  * is updated every time an SPI transaction occurs.
  */
 
@@ -141,15 +141,13 @@ struct spirit_status_s
 
 struct spirit_dev_s
 {
-  FAR struct spi_dev_s *spi;              /* Contained SPI device instance */
-  volatile struct spirit_status_s state;  /* State of the Spirit device */
+  FAR struct spi_dev_s *spi;         /* Contained SPI device instance */
+  union spirit_struct_u
+  {
+    struct spirit_status_s state;    /* State of the Spirit device */
+    uint16_t u16;                    /* For alternative accesses */
+  } u;
 };
-
-/******************************************************************************
- * Public Function Prototypes
- ******************************************************************************/
-
-void spirit_update_status(FAR struct spirit_dev_s *priv);
 
 #ifdef __cplusplus
 }

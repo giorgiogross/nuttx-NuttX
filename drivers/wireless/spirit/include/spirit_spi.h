@@ -1,6 +1,6 @@
 /******************************************************************************
  * include/nuttx/wireless/spirit/include/spirit_spi.h
- * Header file for low level SPIRIT SPI driver.
+ * Header file for NuttX SPIRIT SPI driver interface.
  *
  *   Copyright (C) 2017 Gregory Nutt. All rights reserved.
  *   Authors: Gregory Nutt <gnutt@nuttx.org>
@@ -11,9 +11,6 @@
  *   Copyright(c) 2015 STMicroelectronics
  *   Author: VMA division - AMS
  *   Version 3.2.2 08-July-2015
- *
- *   Adapted for NuttX by:
- *   Author:  Gregory Nutt <gnutt@nuttx.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,7 +51,26 @@
 #include "spirit_types.h"
 
 /******************************************************************************
- * Public Functions
+ * Pre-processor Defintiions
+ ******************************************************************************/
+
+/* SPIRIT1 SPI Headers */
+
+#define HEADER_WRITE_MASK     0x00  /* Write mask for header byte */
+#define HEADER_READ_MASK      0x01  /* Read mask for header byte */
+#define HEADER_ADDRESS_MASK   0x00  /* Address mask for header byte */
+#define HEADER_COMMAND_MASK   0x80  /* Command mask for header byte */
+#define LINEAR_FIFO_ADDRESS   0xff  /* Linear FIFO address */
+
+/* SPIRIT macros to construct headers */
+
+#define __MKHEADER(a,rw)      (a | rw)
+#define WRITE_HEADER          __MKHEADER(HEADER_ADDRESS_MASK, HEADER_WRITE_MASK)
+#define READ_HEADER           __MKHEADER(HEADER_ADDRESS_MASK, HEADER_READ_MASK)
+#define COMMAND_HEADER        __MKHEADER(HEADER_COMMAND_MASK, HEADER_WRITE_MASK)
+
+/******************************************************************************
+ * Public Function Prototypes
  ******************************************************************************/
 
 #ifdef __cplusplus
@@ -74,38 +90,37 @@ struct spi_dev_s; /* Forward reference */
  *
  *   regaddr: Base register's address to be read
  *   buffer:  Pointer to the buffer of registers' values to be read
- *   buflen:  Number of registers and bytes to be read
+ *   buflen:  Number of register values to be read
  *
  * Returned Value:
- *   Spirit status bytes
+ *   Zero (OK) is returned on success.  A negated errno value is returned on
+ *   any failure.  On success, spirit->state is updated.
  *
  ******************************************************************************/
 
-struct spirit_status_s spirit_reg_read(FAR struct spi_dev_s *spi,
-                                       uint8_t regaddr, FAR uint8_t *buffer,
-                                       unsigned int buflen);
+int spirit_reg_read(FAR struct spirit_dev_s *spirit, uint8_t regaddr,
+                    FAR uint8_t *buffer, unsigned int buflen);
 
 /******************************************************************************
  * Name: spirit_reg_write
  *
  * Description:
- *   Read single or multiple SPIRIT1 register
+ *   Read single or multiple SPIRIT1 register.
  *
  * Input parameters:
- *
- *   regaddr: Base register's address to write
- *   buffer:  Pointer to the buffer of registers' values to write
- *   buflen:  Number of registers and bytes to be read
+ *   spirit  - Reference to an instance of the driver state stucture.
+ *   regaddr - Base register's address to write
+ *   buffer  - Pointer to the buffer of register values to write
+ *   buflen  - Number of registers values to be written.
  *
  * Returned Value:
- *   Spirit status bytes
+ *   Zero (OK) is returned on success.  A negated errno value is returned on
+ *   any failure.  On success, spirit->state is updated.
  *
  ******************************************************************************/
 
-struct spirit_status_s spirit_reg_write(FAR struct spi_dev_s *spi,
-                                        uint8_t regaddr,
-                                        FAR const uint8_t *buffer,
-                                        unsigned int buflen);
+int spirit_reg_write(FAR struct spirit_dev_s *spirit, uint8_t regaddr,
+                     FAR const uint8_t *buffer, unsigned int buflen);
 
 /******************************************************************************
  * Name: spirit_command
@@ -114,15 +129,74 @@ struct spirit_status_s spirit_reg_write(FAR struct spi_dev_s *spi,
  *   Send a command
  *
  * Input parameters:
- *
- *   cmd:  Command code to be sent
+ *   spirit - Reference to an instance of the driver state stucture.
+ *   cmd    - Command code to be sent
  *
  * Returned Value:
- *   Spirit status bytes
+ *   Zero (OK) is returned on success.  A negated errno value is returned on
+ *   any failure.  On success, spirit->state is updated.
  *
  ******************************************************************************/
 
-struct spirit_status_s spirit_command(FAR struct spi_dev_s *spi, uint8_t cmd);
+int spirit_command(FAR struct spirit_dev_s *spirit, uint8_t cmd);
+
+/******************************************************************************
+ * Name: spirt_fifo_read
+ *
+ * Description:
+ *   Read data from RX FIFO
+ *
+ * Input parameters:
+ *   spirit - Reference to an instance of the driver state stucture.
+ *   buffer - Pointer to the buffer of data values to write
+ *   buflen - Number of bytes to be written
+ *
+ * Returned Value:
+ *   Zero (OK) is returned on success.  A negated errno value is returned on
+ *   any failure.  On success, spirit->state is updated.
+ *
+ ******************************************************************************/
+
+int spirt_fifo_read(FAR struct spirit_dev_s *spirit, FAR uint8_t *buffer,
+                    unsigned int buflen);
+
+/******************************************************************************
+ * Name: spirt_fifo_write
+ *
+ * Description:
+ *   Write data into TX FIFO.
+ *
+ * Input parameters:
+ *   spirit  - Reference to an instance of the driver state stucture.
+ *   buffer  - Pointer to the buffer of data values to write
+ *   buflen  - Number of data values to be written.
+ *
+ * Returned Value:
+ *   Zero (OK) is returned on success.  A negated errno value is returned on
+ *   any failure.  On success, spirit->state is updated.
+ *
+ ******************************************************************************/
+
+int spirt_fifo_write(FAR struct spirit_dev_s *spirit,
+                     FAR const uint8_t *buffer, unsigned int buflen);
+
+/******************************************************************************
+ * Name: spirit_update_status
+ *
+ * Description:
+ *   Updates the state field in the driver instance by reading the MC_STATE
+ *   register of SPIRIT.
+ *
+ * Input Parameters:
+ *   spirit - Reference to an instance of the driver state stucture.
+ *
+ * Returned Value:
+ *   Zero (OK) is returned on success.  A negated errno value is returned on
+ *   any failure.  On success, spirit->state is updated.
+ *
+ ******************************************************************************/
+
+int spirit_update_status(FAR struct spirit_dev_s *spirit);
 
 #ifdef __cplusplus
 }
