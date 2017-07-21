@@ -1,0 +1,15 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config WL_SPIRIT
+	bool "STMicro Spririt Radio Library"
+	default n
+	select SPI
+	---help---
+		Enable support for the STMicro Spririt Radio Library
+
+if WL_SPIRIT
+
+endif
