@@ -1,5 +1,5 @@
 /****************************************************************************
- * configs/nucleo-f334r8/include/board.h
+ * configs/stm32f334-disco/include/board.h
  * include/arch/board/board.h
  *
  *   Copyright (C) 2017 Gregory Nutt. All rights reserved.
@@ -34,8 +34,8 @@
  *
  ****************************************************************************/
 
-#ifndef __CONFIG_STM32F3DISCOVERY_INCLUDE_BOARD_H
-#define __CONFIG_STM32F3DISCOVERY_INCLUDE_BOARD_H
+#ifndef __CONFIG_STM32F334_DISCO_INCLUDE_BOARD_H
+#define __CONFIG_STM32F334_DISCO_INCLUDE_BOARD_H
 
 /****************************************************************************
  * Included Files
@@ -136,63 +136,40 @@
 #define BOARD_HRTIM1_FREQUENCY  STM32_HCLK_FREQUENCY
 
 /* LED definitions **********************************************************/
-/* The Nucleo F334R8 board has three LEDs.  Two of these are controlled by
- * logic on the board and are not available for software control:
- *
- * LD1 COM:  LD1 default status is red.  LD1 turns to green to indicate that
- *           communications are in progress between the PC and the
- *           ST-LINK/V2-1.
- * LD3 PWR:  red LED indicates that the board is powered.
- *
- * And one can be controlled by software:
- *
- * User LD2: green LED is a user LED connected to the I/O PA5 of the
- *           STM32F334R8.
- *
- * If CONFIG_ARCH_LEDS is not defined, then the user can control the LED in
- * any way.  The following definition is used to access the LED.
- */
 
 /* LED index values for use with board_userled() */
 
-#define BOARD_LED1       0 /* User LD2 */
-#define BOARD_NLEDS      1
+#define BOARD_LED1       0
+#define BOARD_LED2       1
+#define BOARD_LED3       2
+#define BOARD_LED4       3
+#define BOARD_NLEDS      4
 
 /* LED bits for use with board_userled_all() */
 
 #define BOARD_LED1_BIT   (1 << BOARD_LED1)
+#define BOARD_LED2_BIT   (1 << BOARD_LED2)
+#define BOARD_LED3_BIT   (1 << BOARD_LED3)
+#define BOARD_LED4_BIT   (1 << BOARD_LED4)
 
-/* If CONFIG_ARCH_LEDs is defined, then NuttX will control the LED on board
- * the Nucleo F334R8.  The following definitions describe how NuttX controls
- * the LED:
- *
- *   SYMBOL              Meaning                  LED1 state
- *   ------------------  -----------------------  ----------
- *   LED_STARTED         NuttX has been started   OFF
- *   LED_HEAPALLOCATE    Heap has been allocated  OFF
- *   LED_IRQSENABLED     Interrupts enabled       OFF
- *   LED_STACKCREATED    Idle stack created       ON
- *   LED_INIRQ           In an interrupt          No change
- *   LED_SIGNAL          In a signal handler      No change
- *   LED_ASSERTION       An assertion failed      No change
- *   LED_PANIC           The system has crashed   Blinking
- *   LED_IDLE            STM32 is is sleep mode   Not used
+/* If CONFIG_ARCH_LEDs is defined, then NuttX will control the 4 LEDs on board the
+ * stm32f334-disco.  The following definitions describe how NuttX controls the LEDs:
  */
 
-#define LED_STARTED      0
-#define LED_HEAPALLOCATE 0
-#define LED_IRQSENABLED  0
-#define LED_STACKCREATED 1
-#define LED_INIRQ        2
-#define LED_SIGNAL       2
-#define LED_ASSERTION    2
-#define LED_PANIC        1
+#define LED_STARTED       0  /* LED1 */
+#define LED_HEAPALLOCATE  1  /* LED2 */
+#define LED_IRQSENABLED   2  /* LED1 + LED2 */
+#define LED_STACKCREATED  3  /* LED3 */
+#define LED_INIRQ         4  /* LED1 + LED3 */
+#define LED_SIGNAL        5  /* LED2 + LED3 */
+#define LED_ASSERTION     6  /* LED1 + LED2 + LED3 */
+#define LED_PANIC         7  /* N/C  + N/C  + N/C + LED4 */
 
 /* Button definitions *******************************************************/
-/* The Nucleo F334R8 supports two buttons; only one button is controllable
+/* The STM32F334-DISCO supports two buttons; only one button is controllable
  * by software:
  *
- *   B1 USER:  user button connected to the I/O PC13 of the STM32F334R8.
+ *   B1 USER:  user button connected to the I/O PA0 of the STM32F334R8.
  *   B2 RESET: push button connected to NRST is used to RESET the
  *             STM32F334R8.
  */
@@ -231,16 +208,8 @@
 
 /* USART */
 
-/* By default the USART2 is connected to STLINK Virtual COM Port:
- * USART2_RX - PA3
- * USART2_TX - PA4
- */
-
-#define GPIO_USART2_RX GPIO_USART2_RX_1 /* PA3 */
-#define GPIO_USART2_TX GPIO_USART2_TX_1 /* PA4 */
-
-#define GPIO_USART1_RX GPIO_USART1_RX_1 /* PA10 */
-#define GPIO_USART1_TX GPIO_USART1_TX_1 /* PA9 */
+#define GPIO_USART2_RX GPIO_USART2_RX_3 /* PB4 */
+#define GPIO_USART2_TX GPIO_USART2_TX_3 /* PB3 */
 
 /* COMP */
 
@@ -250,6 +219,30 @@
 #define OPAMP2_VPSEL OPAMP2_VPSEL_PB14
 
 /* HRTIM */
+
+#define HRTIM_TIMA_PRESCALER 2
+
+#define HRTIM_TIMA_CH1_SET HRTIM_OUT_SET_CMP1
+#define HRTIM_TIMA_CH1_RST HRTIM_OUT_RST_PER
+#define HRTIM_TIMA_CH2_SET HRTIM_OUT_SET_PER
+#define HRTIM_TIMA_CH2_RST HRTIM_OUT_RST_CMP1
+
+#define HRTIM_FAULT_SAMPLING 0
+#define HRTIM_FAULT1_POL     0
+#define HRTIM_FAULT1_SRC     0
+#define HRTIM_FAULT1_FILTER  0
+#define HRTIM_FAULT1_LOCK    0
+
+#define HRTIM_EEV_SAMPLING   0
+#define HRTIM_EEV1_FILTER    0
+#define HRTIM_EEV1_SRC       0
+#define HRTIM_EEV1_POL       0
+#define HRTIM_EEV1_SEN       0
+#define HRTIM_EEV1_MODE      0
+
+#define HRTIM_ADC_TRG1 HRTIM_ADCTRG13_MC1
+
+#define HRTIM_TIMA_DAC  0
 
 /* DMA channels *************************************************************/
 /* ADC */
@@ -290,4 +283,4 @@ void stm32_boardinitialize(void);
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif /* __CONFIG_NUCLEO_F334R8_INCLUDE_BOARD_H */
+#endif /* __CONFIG_STM32F334_DISCO_INCLUDE_BOARD_H */
