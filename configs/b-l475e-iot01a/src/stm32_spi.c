@@ -50,7 +50,7 @@
 #include "stm32l4_gpio.h"
 #include "stm32l4_spi.h"
 
-#include "b-l475-iot01a.h"
+#include "b-l475e-iot01a.h"
 
 /************************************************************************************
  * Pre-processor Definitions
@@ -186,10 +186,10 @@ uint8_t stm32l4_spi2status(FAR struct spi_dev_s *dev, uint32_t devid)
 
 #ifdef CONFIG_STM32L4_SPI3
 void stm32l4_spi3select(FAR struct spi_dev_s *dev, uint32_t devid, bool selected)
-
+{
   spiinfo("devid: %d CS: %s\n", (int)devid, selected ? "assert" : "de-assert");
 
-#ifdef CONFIG_WL_CC3000
+#ifdef HAVE_SPSGRF
   if (devid == SPIDEV_WIRELESS(0))
     {
       stm32l4_gpiowrite(GPIO_SPSGRF_CS, !selected);

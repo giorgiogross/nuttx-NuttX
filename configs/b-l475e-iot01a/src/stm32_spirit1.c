@@ -54,7 +54,7 @@
 #include "stm32l4_exti.h"
 #include "stm32l4_spi.h"
 
-#include "b-l475-iot01a.h"
+#include "b-l475e-iot01a.h"
 
 #ifdef HAVE_SPSGRF
 
