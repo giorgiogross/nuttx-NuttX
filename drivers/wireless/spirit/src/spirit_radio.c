@@ -39,8 +39,9 @@
  * Included Files
  ******************************************************************************/
 
-#include <assert.h>
 #include <math.h>
+#include <assert.h>
+#include <errno.h>
 
 #include "spirit_types.h"
 #include "spirit_radio.h"
@@ -70,12 +71,72 @@
  ******************************************************************************/
 
 /******************************************************************************
- * Name: 
+ * Name: spirit_radio_initialize
  *
  * Description:
+ *   Initializes the SPIRIT analog and digital radio part according to the
+ *   specified parameters in the radioinit.
  *
- * Parameters:
+ * Input Parameters:
+ *   spirit    - Reference to a Spirit library state structure instance
+ *   radioinit - Pointer to a struct radio_init_s that contains the
  *
  * Returned Value:
+ *   Error code:  0=no error, <0=error during calibration of VCO.
  *
  ******************************************************************************/
+
+int spirit_radio_initialize(FAR struct spirit_library_s *spirit,
+                            FAR const struct radio_init_s *radioinit)
+{
+#warning Missing logic
+  return -ENOSYS;
+}
+
+/******************************************************************************
+ * Name: spirit_radio_set_palevel
+ *
+ * Description:
+ *   Sets a specific PA_LEVEL register, with a value given in dBm.
+ *
+ *   NOTE: This function makes use of the @ref spirit_radio_dbm2reg fcn to
+ *   interpolate the power value.
+ *
+ * Input Parameters:
+ *   spirit   - Reference to a Spirit library state structure instance
+ *   ndx      - PA_LEVEL to set. This parameter shall be in the range [0:7].
+ *   powerdbm - PA value to write expressed in dBm . Be sure that this values
+ *              is in the correct range [-PA_LOWER_LIMIT: PA_UPPER_LIMIT] dBm.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ******************************************************************************/
+
+void spirit_radio_set_palevel(FAR struct spirit_library_s *spirit,
+                              uint8_t ndx, float powerdbm)
+{
+#warning Missing logic
+}
+
+/******************************************************************************
+ * Name: spirit_radio_set_palevel_maxindex
+ *
+ * Description:
+ *   Sets a specific PA_LEVEL_MAX_INDEX.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *   ndx    - PA_LEVEL_MAX_INDEX to set. This parameter must be in the range
+ *            [0:7].
+ *
+ * Returned Value:
+ *   None
+ *
+ ******************************************************************************/
+
+void spirit_radio_set_palevel_maxindex(FAR struct spirit_library_s *spirit,
+                                       uint8_t ndx)
+{
+#warning Missing logic
+}

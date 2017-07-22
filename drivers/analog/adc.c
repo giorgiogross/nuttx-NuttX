@@ -336,6 +336,7 @@ static ssize_t adc_read(FAR struct file *filep, FAR char *buffer, size_t buflen)
               *(int32_t *)&buffer[nread + 1] = msg->am_data;
               buffer[nread] = msg->am_channel;
             }
+
           nread += msglen;
 
           /* Increment the head of the circular message buffer */

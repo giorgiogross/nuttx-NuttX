@@ -1,7 +1,7 @@
 /****************************************************************************
  * drivers/wireless/ieee802154/spirit1/spirit1.c
  *
- *   Copyright (C) 2016 Gregory Nutt. All rights reserved.
+ *   Copyright (C) 2017 Gregory Nutt. All rights reserved.
  *   Author:  Gregory Nutt <gnutt@nuttx.org>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -60,15 +60,16 @@
 #include <nuttx/wireless/ieee802154/ieee802154_radio.h>
 
 #include "spirit_general.h"
+#include "spirit_spi.h"
 #include "spirit_radio.h"
 
 #include <arch/board/board.h>
 
 #include "spirit1.h"
 
-/************************************************************************************
+/****************************************************************************
  * Pre-processor Definitions
- ************************************************************************************/
+ ****************************************************************************/
 
 #ifndef CONFIG_SCHED_HPWORK
 #  error High priority work queue required in this driver
@@ -86,9 +87,9 @@
 #  define CONFIG_IEEE802154_spirit1_FREQUENCY 1000000
 #endif
 
-/************************************************************************************
+/****************************************************************************
  * Private Types
- ************************************************************************************/
+ ****************************************************************************/
 
 /* SPIRIT1 device instance
  *
@@ -102,15 +103,31 @@ struct spirit1_dev_s
   struct spirit_library_s           spirit;    /* Spirit library state */
   FAR const struct spirit1_lower_s *lower;     /* Low-level MCU-specific support */
   struct work_s                     irqwork;   /* Interrupt continuation work queue support */
-  uint8_t                           panid[2];  /* PAN identifier, FFFF = not set */
-  uint16_t                          saddr;     /* Short address, FFFF = not set */
-  uint8_t                           eaddr[8];  /* Extended address, FFFFFFFFFFFFFFFF = not set */
+  uint8_t                           panid[2];  /* PAN identifier, ffff = not set */
+  uint16_t                          saddr;     /* Short address, ffff = not set */
+  uint8_t                           eaddr[8];  /* Extended address, ffffffffffffffff = not set */
   uint8_t                           channel;   /* 11 to 26 for the 2.4 GHz band */
   uint8_t                           devmode;   /* Device mode: device, coord, pancoord */
   uint8_t                           paenabled; /* Enable usage of PA */
   uint8_t                           rxmode;    /* Reception mode: Main, no CRC, promiscuous */
   int32_t                           txpower;   /* TX power in mBm = dBm/100 */
   struct ieee802154_cca_s           cca;       /* Clear channel assessement method */
+};
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+static const struct radio_init_s g_radio_init =
+{
+  SPIRIT_BASE_FREQUENCY,     /* base_frequency */
+  SPIRIT_CHANNEL_SPACE,      /* chspace */
+  SPIRIT_XTAL_OFFSET_PPM,    /* xtal_offset_ppm */
+  SPIRIT_CHANNEL_NUMBER,     /* chnum */
+  SPIRIT_MODULATION_SELECT,  /* modselect */
+  SPIRIT_DATARATE,           /* datarate */
+  SPIRIT_FREQ_DEVIATION,     /* freqdev */
+  SPIRIT_BANDWIDTH           /* bandwidth */
 };
 
 /****************************************************************************
@@ -205,30 +222,17 @@ int spirit1_initialize(FAR struct spirit1_dev_s *dev,
       return ret;
     }
 
-#if 0
   /* Soft reset of core */
 
-  spirit1_strobe(SPIRIT1_STROBE_SRES);
-/*  SpiritCmdStrobeSres();*/
+  spirit_command(spirit, COMMAND_SRES);
 
   /* Configures the SPIRIT1 radio part */
 
-  SRadioInit xRadioInit = {
-    XTAL_FREQUENCY,
-    XTAL_OFFSET_PPM,
-    BASE_FREQUENCY,
-    CHANNEL_SPACE,
-    CHANNEL_NUMBER,
-    MODULATION_SELECT,
-    DATARATE,
-    FREQ_DEVIATION,
-    BANDWIDTH
-  };
+  spirit_radio_initialize(spirit, &g_radio_init);
+  spirit_radio_set_palevel(spirit, 0, SPIRIT_POWER_DBM);
+  spirit_radio_set_palevel_maxindex(spirit, 0);
 
-  SpiritRadioInit(&xRadioInit);
-  SpiritRadioSetPALeveldBm(0,POWER_DBM);
-  SpiritRadioSetPALevelMaxIndex(0);
-
+#if 0
   /* Configures the SPIRIT1 packet handler part*/
 
   PktBasicInit xBasicInit = {
