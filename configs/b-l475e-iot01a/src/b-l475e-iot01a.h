@@ -108,7 +108,7 @@
 #define GPIO_SPSGRF_INT  (GPIO_INPUT | GPIO_FLOAT | GPIO_SPEED_100MHz | \
                           GPIO_EXTI | GPIO_PORTE | GPIO_PIN5)
 #define GPIO_SPSGRF_SDN  (GPIO_OUTPUT | GPIO_FLOAT | GPIO_PUSHPULL | \
-                          GPIO_SPEED_50MHz | GPIO_OUTPUT_CLEAR | \
+                          GPIO_SPEED_50MHz | GPIO_OUTPUT_SET | \
                           GPIO_PORTB | GPIO_PIN15)
 
 /****************************************************************************

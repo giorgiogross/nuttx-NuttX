@@ -57,6 +57,7 @@
 
 struct spirit1_lower_s
 {
+  int  (*reset)(FAR const struct spirit1_lower_s *lower);
   int  (*attach)(FAR const struct spirit1_lower_s *lower, xcpt_t handler,
                  FAR void *arg);
   void (*enable)(FAR const struct spirit1_lower_s *lower, bool state);

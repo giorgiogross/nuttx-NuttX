@@ -46,8 +46,6 @@
 #  include <stdbool.h>
 #endif
 
-#include <stm32l4.h>
-
 /************************************************************************************
  * Pre-processor Definitions
  ************************************************************************************/
@@ -96,6 +94,12 @@
  * apparently, running normally.  If LED is flashing at approximately
  * 2Hz, then a fatal error has been detected and the system has halted.
  */
+
+/* SPSGRF-915 Spirit1 library definitions */
+
+#define SPIRIT_XTAL_FREQUENCY 50000000
+#define SPIRIT_VERSION        SPIRIT_VERSION_3_0
+#define SPIRIT_RANGE_TYPE     RANGE_EXT_NONE       /* RANGE_EXT_SKYWORKS */
 
 /* Alternate function pin selections ************************************************/
 

@@ -59,6 +59,11 @@
 #include <nuttx/wireless/ieee802154/spirit1.h>
 #include <nuttx/wireless/ieee802154/ieee802154_radio.h>
 
+#include "spirit_general.h"
+#include "spirit_radio.h"
+
+#include <arch/board/board.h>
+
 #include "spirit1.h"
 
 /************************************************************************************
@@ -94,7 +99,7 @@
 struct spirit1_dev_s
 {
   struct ieee802154_radio_s         ieee;      /* Public device instance */
-  FAR struct spi_dev_s             *spi;       /* Saved SPI interface instance */
+  struct spirit_library_s           spirit;    /* Spirit library state */
   FAR const struct spirit1_lower_s *lower;     /* Low-level MCU-specific support */
   struct work_s                     irqwork;   /* Interrupt continuation work queue support */
   uint8_t                           panid[2];  /* PAN identifier, FFFF = not set */
@@ -125,13 +130,16 @@ static void spirit1_irqworker(FAR void *arg)
   FAR struct spirit1_dev_s *dev = (FAR struct spirit1_dev_s *)arg;
   uint8_t status = 0;
 
-  wlinfo("Status: 0x%02X\n", status);
-  UNUSED(status);
+  DEBUGASSERT(dev != NULL);
 
   /* Process the Spirit1 interrupt */
 
+  wlinfo("Status: 0x%02X\n", status);
+  UNUSED(status);
+
   /* Re-enable the interrupt. */
 
+  DEBUGASSERT(dev->lower != NULL && dev->lower->enable != NULL);
   dev->lower->enable(dev->lower, true);
 }
 
@@ -170,6 +178,120 @@ static int spirit1_interrupt(int irq, FAR void *context, FAR void *arg)
 }
 
 /****************************************************************************
+ * Name: spirit1_initialize
+ *
+ * Description:
+ *   Initialize the Spirit1 radio.
+ *
+ ****************************************************************************/
+
+int spirit1_initialize(FAR struct spirit1_dev_s *dev,
+                       FAR struct spi_dev_s *spi)
+{
+  FAR struct spirit_library_s *spirit = &dev->spirit;
+  int ret;
+
+  /* Configures the Spirit1 library */
+
+  spirit->spi            = spi;
+  spirit->xtal_frequency = SPIRIT_XTAL_FREQUENCY;
+
+  /* Reset the Spirit1 part */
+
+  DEBUGASSERT(dev->lower != NULL && dev->lower->reset != NULL);
+  ret = dev->lower->reset(dev->lower) ;
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+#if 0
+  /* Soft reset of core */
+
+  spirit1_strobe(SPIRIT1_STROBE_SRES);
+/*  SpiritCmdStrobeSres();*/
+
+  /* Configures the SPIRIT1 radio part */
+
+  SRadioInit xRadioInit = {
+    XTAL_FREQUENCY,
+    XTAL_OFFSET_PPM,
+    BASE_FREQUENCY,
+    CHANNEL_SPACE,
+    CHANNEL_NUMBER,
+    MODULATION_SELECT,
+    DATARATE,
+    FREQ_DEVIATION,
+    BANDWIDTH
+  };
+
+  SpiritRadioInit(&xRadioInit);
+  SpiritRadioSetPALeveldBm(0,POWER_DBM);
+  SpiritRadioSetPALevelMaxIndex(0);
+
+  /* Configures the SPIRIT1 packet handler part*/
+
+  PktBasicInit xBasicInit = {
+    PREAMBLE_LENGTH,
+    SYNC_LENGTH,
+    SYNC_WORD,
+    LENGTH_TYPE,
+    LENGTH_WIDTH,
+    CRC_MODE,
+    CONTROL_LENGTH,
+    EN_ADDRESS,
+    EN_FEC,
+    EN_WHITENING
+  };
+
+  SpiritPktBasicInit(&xBasicInit);
+
+  /* Enable the following interrupt sources, routed to GPIO */
+
+  SpiritIrqDeInit(NULL);
+  SpiritIrqClearStatus();
+  SpiritIrq(TX_DATA_SENT, S_ENABLE);
+  SpiritIrq(RX_DATA_READY,S_ENABLE);
+  SpiritIrq(VALID_SYNC,S_ENABLE);
+  SpiritIrq(RX_DATA_DISC, S_ENABLE);
+  SpiritIrq(TX_FIFO_ERROR, S_ENABLE);
+  SpiritIrq(RX_FIFO_ERROR, S_ENABLE);
+
+  /* Configure Spirit1 */
+
+  SpiritRadioPersistenRx(S_ENABLE);
+  SpiritQiSetSqiThreshold(SQI_TH_0);
+  SpiritQiSqiCheck(S_ENABLE);
+  SpiritQiSetRssiThresholddBm(CCA_THRESHOLD);
+  SpiritTimerSetRxTimeoutStopCondition(SQI_ABOVE_THRESHOLD);
+  SET_INFINITE_RX_TIMEOUT();
+  SpiritRadioAFCFreezeOnSync(S_ENABLE);
+
+  /* Puts the SPIRIT1 in STANDBY mode (125us -> rx/tx) */
+
+  spirit1_strobe(SPIRIT1_STROBE_STANDBY);
+/*  SpiritCmdStrobeCommand(SPIRIT1_STROBE_STANDBY);*/
+/*  SpiritCmdStrobeStandby();*/
+  spirit_on = OFF;
+  CLEAR_RXBUF();
+  CLEAR_TXBUF();
+
+  /* Initializes the mcu pin as input, used for IRQ */
+
+  SdkEvalM2SGpioInit(M2S_GPIO_0, M2S_MODE_EXTI_IN);
+  SdkEvalM2SGpioInit(M2S_GPIO_1, M2S_MODE_EXTI_IN);
+  SdkEvalM2SGpioInit(M2S_GPIO_2, M2S_MODE_EXTI_IN);
+  SdkEvalM2SGpioInit(M2S_GPIO_3, M2S_MODE_EXTI_IN);
+
+  /* Configure the radio to route the IRQ signal to its GPIO 3 */
+
+  SpiritGpioInit(&(SGpioInit){SPIRIT_GPIO_3, SPIRIT_GPIO_MODE_DIGITAL_OUTPUT_LP, SPIRIT_GPIO_DIG_OUT_IRQ});
+#endif
+
+  return OK;
+}
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
@@ -190,14 +312,14 @@ FAR struct ieee802154_radio_s *spirit1_init(FAR struct spi_dev_s *spi,
 
   dev = (FAR struct spirit1_dev_s *)kmm_zalloc(sizeof(struct spirit1_dev_s));
   if (dev == NULL)
-   {
+    {
       wlerr("ERROR: Failed to allocate device structure\n");
-   }
+    }
 
   /* Attach the interface, lower driver, and devops */
 
-  dev->spi   = spi;
   dev->lower = lower;
+
   //dev->ieee.ops = &spirit1_devops;
 
   /* Attach irq */
@@ -212,7 +334,7 @@ FAR struct ieee802154_radio_s *spirit1_init(FAR struct spi_dev_s *spi,
 
   /* Initialize device */
 
-  //spirit1_initialize(dev);
+  spirit1_initialize(dev, spi);
 
   /* Put the Device to RX ON Mode */
 

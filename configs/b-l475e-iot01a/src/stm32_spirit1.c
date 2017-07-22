@@ -41,8 +41,9 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <errno.h>
+#include <unistd.h>
 #include <assert.h>
+#include <errno.h>
 #include <debug.h>
 
 #include <nuttx/arch.h>
@@ -88,11 +89,13 @@ struct stm32l4_priv_s
  * to isolate the Spirit1 driver from differences in GPIO interrupt handling
  * varying boards and MCUs.
  *
+ *   stm32l4_reset      - Reset the Spirit1 part.
  *   stm32l4_attach_irq - Attach the Spirit1 interrupt handler to the GPIO
                           interrupt
  *   stm32l4_enable_irq - Enable or disable the GPIO interrupt
  */
 
+static int  stm32l4_reset(FAR const struct spirit1_lower_s *lower);
 static int  stm32l4_attach_irq(FAR const struct spirit1_lower_s *lower,
                              xcpt_t handler, FAR void *arg);
 static void stm32l4_enable_irq(FAR const struct spirit1_lower_s *lower,
@@ -115,6 +118,7 @@ static int  stm32l4_spirit1_devsetup(FAR struct stm32l4_priv_s *priv);
 
 static struct stm32l4_priv_s g_spirit1 =
 {
+  .dev.reset   = stm32l4_reset,
   .dev.attach  = stm32l4_attach_irq,
   .dev.enable  = stm32l4_enable_irq,
   .handler     = NULL,
@@ -127,6 +131,25 @@ static struct stm32l4_priv_s g_spirit1 =
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+/* Reset the Spirit1 1 part */
+
+static int stm32l4_reset(FAR const struct spirit1_lower_s *lower)
+{
+  FAR struct stm32l4_priv_s *priv = (FAR struct stm32l4_priv_s *)lower;
+
+  DEBUGASSERT(priv != NULL);
+
+  /* Reset pulse */
+
+  stm32l4_gpiowrite(priv->sdncfg, true);
+  stm32l4_gpiowrite(priv->sdncfg, false);
+
+  /* Wait minimum 1.5 ms to allow SPIRIT1 a proper boot-up sequence */
+
+  usleep(1500);
+  return OK;
+}
 
 /* IRQ/GPIO access callbacks.  These operations all hidden behind
  * callbacks to isolate the Spirit1 driver from differences in GPIO
@@ -203,8 +226,8 @@ static int stm32l4_spirit1_devsetup(FAR struct stm32l4_priv_s *priv)
   FAR struct spi_dev_s *spi;
   int ret;
 
-  /* Configure the interrupt pin and SDN pins.  Innitializing the SDN to '0'
-   * powers up the Spirit1.
+  /* Configure the interrupt pin and SDN pins.  Innitializing the SDN to '1'
+   * powers down the Spirit1.
    */
 
    stm32l4_configgpio(priv->intcfg);

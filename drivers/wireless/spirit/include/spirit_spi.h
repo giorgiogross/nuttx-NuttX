@@ -87,7 +87,6 @@ struct spi_dev_s; /* Forward reference */
  *   Read single or multiple SPIRIT1 register
  *
  * Input parameters:
- *
  *   regaddr: Base register's address to be read
  *   buffer:  Pointer to the buffer of registers' values to be read
  *   buflen:  Number of register values to be read
@@ -98,7 +97,7 @@ struct spi_dev_s; /* Forward reference */
  *
  ******************************************************************************/
 
-int spirit_reg_read(FAR struct spirit_dev_s *spirit, uint8_t regaddr,
+int spirit_reg_read(FAR struct spirit_library_s *spirit, uint8_t regaddr,
                     FAR uint8_t *buffer, unsigned int buflen);
 
 /******************************************************************************
@@ -119,7 +118,7 @@ int spirit_reg_read(FAR struct spirit_dev_s *spirit, uint8_t regaddr,
  *
  ******************************************************************************/
 
-int spirit_reg_write(FAR struct spirit_dev_s *spirit, uint8_t regaddr,
+int spirit_reg_write(FAR struct spirit_library_s *spirit, uint8_t regaddr,
                      FAR const uint8_t *buffer, unsigned int buflen);
 
 /******************************************************************************
@@ -138,7 +137,7 @@ int spirit_reg_write(FAR struct spirit_dev_s *spirit, uint8_t regaddr,
  *
  ******************************************************************************/
 
-int spirit_command(FAR struct spirit_dev_s *spirit, uint8_t cmd);
+int spirit_command(FAR struct spirit_library_s *spirit, uint8_t cmd);
 
 /******************************************************************************
  * Name: spirt_fifo_read
@@ -157,7 +156,7 @@ int spirit_command(FAR struct spirit_dev_s *spirit, uint8_t cmd);
  *
  ******************************************************************************/
 
-int spirt_fifo_read(FAR struct spirit_dev_s *spirit, FAR uint8_t *buffer,
+int spirt_fifo_read(FAR struct spirit_library_s *spirit, FAR uint8_t *buffer,
                     unsigned int buflen);
 
 /******************************************************************************
@@ -177,7 +176,7 @@ int spirt_fifo_read(FAR struct spirit_dev_s *spirit, FAR uint8_t *buffer,
  *
  ******************************************************************************/
 
-int spirt_fifo_write(FAR struct spirit_dev_s *spirit,
+int spirt_fifo_write(FAR struct spirit_library_s *spirit,
                      FAR const uint8_t *buffer, unsigned int buflen);
 
 /******************************************************************************
@@ -196,7 +195,7 @@ int spirt_fifo_write(FAR struct spirit_dev_s *spirit,
  *
  ******************************************************************************/
 
-int spirit_update_status(FAR struct spirit_dev_s *spirit);
+int spirit_update_status(FAR struct spirit_library_s *spirit);
 
 #ifdef __cplusplus
 }

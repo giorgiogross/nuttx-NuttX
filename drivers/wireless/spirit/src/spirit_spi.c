@@ -155,7 +155,7 @@ static void spirit_unlock(FAR struct spi_dev_s *spi)
  *
  ******************************************************************************/
 
-int spirit_reg_read(FAR struct spirit_dev_s *spirit, uint8_t regaddr,
+int spirit_reg_read(FAR struct spirit_library_s *spirit, uint8_t regaddr,
                     FAR uint8_t *buffer, unsigned int buflen)
 {
   uint8_t header[2];
@@ -208,7 +208,7 @@ int spirit_reg_read(FAR struct spirit_dev_s *spirit, uint8_t regaddr,
  *
  ******************************************************************************/
 
-int spirit_reg_write(FAR struct spirit_dev_s *spirit, uint8_t regaddr,
+int spirit_reg_write(FAR struct spirit_library_s *spirit, uint8_t regaddr,
                      FAR const uint8_t *buffer, unsigned int buflen)
 {
   uint8_t header[2];
@@ -259,7 +259,7 @@ int spirit_reg_write(FAR struct spirit_dev_s *spirit, uint8_t regaddr,
  *
  ******************************************************************************/
 
-int spirit_command(FAR struct spirit_dev_s *spirit, uint8_t cmd)
+int spirit_command(FAR struct spirit_library_s *spirit, uint8_t cmd)
 {
   uint8_t header[2];
   uint8_t status[2];
@@ -306,7 +306,7 @@ int spirit_command(FAR struct spirit_dev_s *spirit, uint8_t cmd)
  *
  ******************************************************************************/
 
-int spirt_fifo_read(FAR struct spirit_dev_s *spirit, FAR uint8_t *buffer,
+int spirt_fifo_read(FAR struct spirit_library_s *spirit, FAR uint8_t *buffer,
                     unsigned int buflen)
 {
   uint8_t header[2];
@@ -358,7 +358,7 @@ int spirt_fifo_read(FAR struct spirit_dev_s *spirit, FAR uint8_t *buffer,
  *
  ******************************************************************************/
 
-int spirt_fifo_write(FAR struct spirit_dev_s *spirit,
+int spirt_fifo_write(FAR struct spirit_library_s *spirit,
                      FAR const uint8_t *buffer, unsigned int buflen)
 {
   uint8_t header[2];
@@ -409,7 +409,7 @@ int spirt_fifo_write(FAR struct spirit_dev_s *spirit,
  *
  ******************************************************************************/
 
-int spirit_update_status(FAR struct spirit_dev_s *spirit)
+int spirit_update_status(FAR struct spirit_library_s *spirit)
 {
   uint8_t regval;
 

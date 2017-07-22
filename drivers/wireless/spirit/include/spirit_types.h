@@ -136,12 +136,15 @@ struct spirit_status_s
 };
 
 /* An instance of this structure represents the overall state of one Spirit
- * device.  Multiple spirit devices may be supported with multiple instances of this structure.
+ * device from the standpoint of the library.  Multiple spirit devices may be
+ * supported by the library with multiple instances of this structure.
  */
 
-struct spirit_dev_s
+struct spirit_library_s
 {
   FAR struct spi_dev_s *spi;         /* Contained SPI device instance */
+  uint32_t xtal_frequency;           /* Crystal frequency */
+
   union spirit_struct_u
   {
     struct spirit_status_s state;    /* State of the Spirit device */
