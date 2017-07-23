@@ -64,6 +64,7 @@
 #include "spirit_irq.h"
 #include "spirit_spi.h"
 #include "spirit_gpio.h"
+#include "spirit_commands.h"
 #include "spirit_radio.h"
 #include "spirit_pktbasic.h"
 
