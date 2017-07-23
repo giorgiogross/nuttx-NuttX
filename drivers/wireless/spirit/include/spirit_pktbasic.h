@@ -50,37 +50,37 @@
  *
  * struct pktbasic_init_s g_pkbasic_init =
  * {
- *   PKT_PREAMBLE_LENGTH_08BYTES,       // preamble length in bytes
- *   PKT_SYNC_LENGTH_4BYTES,            // sync word length in bytes
- *   0x1A2635A8,                        // sync word
- *   PKT_LENGTH_VAR,                    // variable or fixed payload length
- *   7,                                 // length field width in bits (used only for variable length)
- *   PKT_NO_CRC,                        // CRC mode
- *   PKT_CONTROL_LENGTH_0BYTES,         // control field length
- *   S_ENABLE,                          // address field
- *   S_DISABLE,                         // FEC
- *   S_ENABLE                           // whitening
+ *   PKT_PREAMBLE_LENGTH_08BYTES,       # preamble length in bytes
+ *   PKT_SYNC_LENGTH_4BYTES,            # sync word length in bytes
+ *   0x1A2635A8,                        # sync word
+ *   PKT_LENGTH_VAR,                    # variable or fixed payload length
+ *   7,                                 # length field width in bits (used only for variable length)
+ *   PKT_NO_CRC,                        # CRC mode
+ *   PKT_CONTROL_LENGTH_0BYTES,         # control field length
+ *   S_ENABLE,                          # address field
+ *   S_DISABLE,                         # FEC
+ *   S_ENABLE                           # whitening
  * };
  *
  * struct struct pktbasic_addr_s g_addrinit =
  * {
- *   S_ENABLE,                          // enable/disable filtering on my address
- *   0x34,                              // my address (address of the current node)
- *   S_DISABLE,                         // enable/disable filtering on multicast address
- *   0xEE,                              // multicast address
- *   S_DISABLE,                         // enable/disable filtering on broadcast address
- *   0xFF                               // broadcast address
+ *   S_ENABLE,                          # enable/disable filtering on my address
+ *   0x34,                              # my address (address of the current node)
+ *   S_DISABLE,                         # enable/disable filtering on multicast address
+ *   0xEE,                              # multicast address
+ *   S_DISABLE,                         # enable/disable filtering on broadcast address
+ *   0xFF                               # broadcast address
  * };
  *
  * ...
  *
- * spirit_pktbasic_initialize(&g_pkbasic_init);
- * spirit_pktbasic_addrinit(&g_addrinit);
+ * spirit_pktbasic_initialize(spirit, &g_pkbasic_init);
+ * spirit_pktbasic_addrinit(spirit, &g_addrinit);
  *
  * ...
  *
- * SpiritPktBasicSetPayloadLength(20);
- * SpiritPktBasicSetDestinationAddress(0x44);
+ * SpiritPktBasicSetPayloadLength(spirit, 20);
+ * SpiritPktBasicSetDestinationAddress(spirit, 0x44);
  *
  * ...
  *
@@ -173,6 +173,27 @@ struct pktbasic_addr_s
 /******************************************************************************
  * Public Function Prototypes
  ******************************************************************************/
+
+/******************************************************************************
+ * Name: spirit_pktbasic_initialize
+ *
+ * Description:
+ *   Initializes the Spirit Basic packet according to the specified parameters
+ *   in the struct pktbasic_init_s.  Notice that this function sets the
+ *   autofiltering option on CRC if it is set to any value different from
+ *   BASIC_NO_CRC.
+ *
+ * Input Parameters:
+ *   spirit   - Reference to a Spirit library state structure instance
+ *   pktpasic - Basic packet init structure.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_pktbasic_initialize(FAR struct spirit_library_s *spirit,
+                               FAR const struct pktbasic_init_s *pktpasic);
 
 /******************************************************************************
  * Name: 

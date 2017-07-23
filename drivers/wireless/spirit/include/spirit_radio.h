@@ -46,19 +46,19 @@
  *
  * struct radio_init_s g_radio_init =
  * {
- *    433.4e6,                 // base frequency
- *    20e3,                    // channel space
- *    0,                       // Xtal offset in ppm
- *    0,                       // channel number
- *    FSK,                     // modulation select
- *    38400,                   // datarate
- *    20e3,                    // frequency deviation
- *    100.5e3                  // channel filter bandwidth
+ *    433.4e6,                 # base frequency
+ *    20e3,                    # channel space
+ *    0,                       # Xtal offset in ppm
+ *    0,                       # channel number
+ *    FSK,                     # modulation select
+ *    38400,                   # datarate
+ *    20e3,                    # frequency deviation
+ *    100.5e3                  # channel filter bandwidth
  * };
  *
  * ...
  *
- * spirit_radio_initialize(&g_radio_init);
+ * spirit_radio_initialize(spirit, &g_radio_init);
  */
 
 /******************************************************************************

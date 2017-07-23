@@ -59,7 +59,9 @@
 #include <nuttx/wireless/ieee802154/spirit1.h>
 #include <nuttx/wireless/ieee802154/ieee802154_radio.h>
 
+#include "spirit_types.h"
 #include "spirit_general.h"
+#include "spirit_irq.h"
 #include "spirit_spi.h"
 #include "spirit_radio.h"
 #include "spirit_pktbasic.h"
@@ -251,22 +253,23 @@ int spirit1_initialize(FAR struct spirit1_dev_s *dev,
   spirit_radio_set_palevel(spirit, 0, SPIRIT_POWER_DBM);
   spirit_radio_set_palevel_maxindex(spirit, 0);
 
-#if 0
   /* Configures the SPIRIT1 packet handling logic */
 
   spirit_pktbasic_initialize(spirit, &g_pktbasic_init);
 
   /* Enable the following interrupt sources, routed to GPIO */
 
-  SpiritIrqDeInit(NULL);
-  SpiritIrqClearStatus();
-  SpiritIrq(TX_DATA_SENT, S_ENABLE);
-  SpiritIrq(RX_DATA_READY,S_ENABLE);
-  SpiritIrq(VALID_SYNC,S_ENABLE);
-  SpiritIrq(RX_DATA_DISC, S_ENABLE);
-  SpiritIrq(TX_FIFO_ERROR, S_ENABLE);
-  SpiritIrq(RX_FIFO_ERROR, S_ENABLE);
+  spirit_irq_disable_all(spirit);
+  spirit_irq_clr_pending(spirit);
 
+  spirit_irq_enable(spirit, TX_DATA_SENT, S_ENABLE);
+  spirit_irq_enable(spirit, RX_DATA_READY, S_ENABLE);
+  spirit_irq_enable(spirit, VALID_SYNC, S_ENABLE);
+  spirit_irq_enable(spirit, RX_DATA_DISC, S_ENABLE);
+  spirit_irq_enable(spirit, TX_FIFO_ERROR, S_ENABLE);
+  spirit_irq_enable(spirit, RX_FIFO_ERROR, S_ENABLE);
+
+#if 0
   /* Configure Spirit1 */
 
   SpiritRadioPersistenRx(S_ENABLE);
