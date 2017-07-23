@@ -62,6 +62,7 @@
 #include "spirit_general.h"
 #include "spirit_spi.h"
 #include "spirit_radio.h"
+#include "spirit_pktbasic.h"
 
 #include <arch/board/board.h>
 
@@ -118,6 +119,8 @@ struct spirit1_dev_s
  * Private Data
  ****************************************************************************/
 
+/* Spirit radio initialization */
+
 static const struct radio_init_s g_radio_init =
 {
   SPIRIT_BASE_FREQUENCY,     /* base_frequency */
@@ -129,6 +132,22 @@ static const struct radio_init_s g_radio_init =
   SPIRIT_FREQ_DEVIATION,     /* freqdev */
   SPIRIT_BANDWIDTH           /* bandwidth */
 };
+
+/* Spirit PktBasic initialization */
+
+static const struct pktbasic_init_s g_pktbasic_init =
+{
+  SPIRIT_SYNC_WORD,          /* syncwords */
+  SPIRIT_PREAMBLE_LENGTH,    /* premblen */
+  SPIRIT_SYNC_LENGTH,        /* synclen */
+  SPIRIT_LENGTH_TYPE,        /* fixedvarlen */
+  SPIRIT_LENGTH_WIDTH,       /* pktlenwidth */
+  SPIRIT_CRC_MODE,           /* crcmode */
+  SPIRIT_CONTROL_LENGTH,     /* ctrllen */
+  SPIRIT_EN_ADDRESS,         /* txdestaddr */
+  SPIRIT_EN_FEC,             /* fec */
+  SPIRIT_EN_WHITENING        /* datawhite */
+ };
 
 /****************************************************************************
  * Private Functions
@@ -208,12 +227,12 @@ int spirit1_initialize(FAR struct spirit1_dev_s *dev,
   FAR struct spirit_library_s *spirit = &dev->spirit;
   int ret;
 
-  /* Configures the Spirit1 library */
+  /* Configures the Spirit1 radio library */
 
   spirit->spi            = spi;
   spirit->xtal_frequency = SPIRIT_XTAL_FREQUENCY;
 
-  /* Reset the Spirit1 part */
+  /* Reset the Spirit1 radio part */
 
   DEBUGASSERT(dev->lower != NULL && dev->lower->reset != NULL);
   ret = dev->lower->reset(dev->lower) ;
@@ -222,33 +241,20 @@ int spirit1_initialize(FAR struct spirit1_dev_s *dev,
       return ret;
     }
 
-  /* Soft reset of core */
+  /* Soft reset of Spirit1 core */
 
   spirit_command(spirit, COMMAND_SRES);
 
-  /* Configures the SPIRIT1 radio part */
+  /* Configure the Spirit1 radio part */
 
   spirit_radio_initialize(spirit, &g_radio_init);
   spirit_radio_set_palevel(spirit, 0, SPIRIT_POWER_DBM);
   spirit_radio_set_palevel_maxindex(spirit, 0);
 
 #if 0
-  /* Configures the SPIRIT1 packet handler part*/
+  /* Configures the SPIRIT1 packet handling logic */
 
-  PktBasicInit xBasicInit = {
-    PREAMBLE_LENGTH,
-    SYNC_LENGTH,
-    SYNC_WORD,
-    LENGTH_TYPE,
-    LENGTH_WIDTH,
-    CRC_MODE,
-    CONTROL_LENGTH,
-    EN_ADDRESS,
-    EN_FEC,
-    EN_WHITENING
-  };
-
-  SpiritPktBasicInit(&xBasicInit);
+  spirit_pktbasic_initialize(spirit, &g_pktbasic_init);
 
   /* Enable the following interrupt sources, routed to GPIO */
 
