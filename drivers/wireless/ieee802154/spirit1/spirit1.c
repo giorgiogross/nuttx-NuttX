@@ -63,6 +63,7 @@
 #include "spirit_general.h"
 #include "spirit_irq.h"
 #include "spirit_spi.h"
+#include "spirit_gpio.h"
 #include "spirit_radio.h"
 #include "spirit_pktbasic.h"
 
@@ -125,31 +126,38 @@ struct spirit1_dev_s
 
 static const struct radio_init_s g_radio_init =
 {
-  SPIRIT_BASE_FREQUENCY,     /* base_frequency */
-  SPIRIT_CHANNEL_SPACE,      /* chspace */
-  SPIRIT_XTAL_OFFSET_PPM,    /* xtal_offset_ppm */
-  SPIRIT_CHANNEL_NUMBER,     /* chnum */
-  SPIRIT_MODULATION_SELECT,  /* modselect */
-  SPIRIT_DATARATE,           /* datarate */
-  SPIRIT_FREQ_DEVIATION,     /* freqdev */
-  SPIRIT_BANDWIDTH           /* bandwidth */
+  SPIRIT_BASE_FREQUENCY,              /* base_frequency */
+  SPIRIT_CHANNEL_SPACE,               /* chspace */
+  SPIRIT_XTAL_OFFSET_PPM,             /* xtal_offset_ppm */
+  SPIRIT_CHANNEL_NUMBER,              /* chnum */
+  SPIRIT_MODULATION_SELECT,           /* modselect */
+  SPIRIT_DATARATE,                    /* datarate */
+  SPIRIT_FREQ_DEVIATION,              /* freqdev */
+  SPIRIT_BANDWIDTH                    /* bandwidth */
 };
 
 /* Spirit PktBasic initialization */
 
 static const struct pktbasic_init_s g_pktbasic_init =
 {
-  SPIRIT_SYNC_WORD,          /* syncwords */
-  SPIRIT_PREAMBLE_LENGTH,    /* premblen */
-  SPIRIT_SYNC_LENGTH,        /* synclen */
-  SPIRIT_LENGTH_TYPE,        /* fixedvarlen */
-  SPIRIT_LENGTH_WIDTH,       /* pktlenwidth */
-  SPIRIT_CRC_MODE,           /* crcmode */
-  SPIRIT_CONTROL_LENGTH,     /* ctrllen */
-  SPIRIT_EN_ADDRESS,         /* txdestaddr */
-  SPIRIT_EN_FEC,             /* fec */
-  SPIRIT_EN_WHITENING        /* datawhite */
+  SPIRIT_SYNC_WORD,                   /* syncwords */
+  SPIRIT_PREAMBLE_LENGTH,             /* premblen */
+  SPIRIT_SYNC_LENGTH,                 /* synclen */
+  SPIRIT_LENGTH_TYPE,                 /* fixedvarlen */
+  SPIRIT_LENGTH_WIDTH,                /* pktlenwidth */
+  SPIRIT_CRC_MODE,                    /* crcmode */
+  SPIRIT_CONTROL_LENGTH,              /* ctrllen */
+  SPIRIT_EN_ADDRESS,                  /* txdestaddr */
+  SPIRIT_EN_FEC,                      /* fec */
+  SPIRIT_EN_WHITENING                 /* datawhite */
  };
+
+static const struct spirit_gpio_init_s g_gpioinit =
+{
+  SPIRIT_GPIO_3,                      /* gpiopin */
+  SPIRIT_GPIO_MODE_DIGITAL_OUTPUT_LP, /* gpiomode */
+  SPIRIT_GPIO_DIG_OUT_IRQ             /* gpioio */
+};
 
 /****************************************************************************
  * Private Functions
@@ -282,26 +290,15 @@ int spirit1_initialize(FAR struct spirit1_dev_s *dev,
 
   /* Puts the SPIRIT1 in STANDBY mode (125us -> rx/tx) */
 
-  spirit1_strobe(SPIRIT1_STROBE_STANDBY);
-/*  SpiritCmdStrobeCommand(SPIRIT1_STROBE_STANDBY);*/
-/*  SpiritCmdStrobeStandby();*/
+  spirit_command(spirit, SPIRIT1_STROBE_STANDBY);
   spirit_on = OFF;
   CLEAR_RXBUF();
   CLEAR_TXBUF();
-
-  /* Initializes the mcu pin as input, used for IRQ */
-
-  SdkEvalM2SGpioInit(M2S_GPIO_0, M2S_MODE_EXTI_IN);
-  SdkEvalM2SGpioInit(M2S_GPIO_1, M2S_MODE_EXTI_IN);
-  SdkEvalM2SGpioInit(M2S_GPIO_2, M2S_MODE_EXTI_IN);
-  SdkEvalM2SGpioInit(M2S_GPIO_3, M2S_MODE_EXTI_IN);
+#endif
 
   /* Configure the radio to route the IRQ signal to its GPIO 3 */
 
-  SpiritGpioInit(&(SGpioInit){SPIRIT_GPIO_3, SPIRIT_GPIO_MODE_DIGITAL_OUTPUT_LP, SPIRIT_GPIO_DIG_OUT_IRQ});
-#endif
-
-  return OK;
+  return spirit_gpio_initialize(spirit, &g_gpioinit);
 }
 
 /****************************************************************************
