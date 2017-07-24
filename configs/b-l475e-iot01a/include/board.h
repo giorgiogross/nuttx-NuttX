@@ -107,8 +107,8 @@
 
 #define SPIRIT_RX_WAIT_ACK_PERIOD     50
 
-#define SPIRIT_CCA_THRESHOLD          -90.0   /* dBm */
-#define SPIRIT_XTAL_FREQUENCY         50000000    /* Hz */
+#define SPIRIT_CCA_THRESHOLD          -90.0     /* dBm */
+#define SPIRIT_XTAL_FREQUENCY         50000000  /* Hz */
 #define SPIRIT_XTAL_OFFSET_PPM        0
 #define SPIRIT_BASE_FREQUENCY         868.0e6
 #define SPIRIT_CHANNEL_SPACE          20e3

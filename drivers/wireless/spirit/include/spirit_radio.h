@@ -179,12 +179,12 @@ int spirit_radio_initialize(FAR struct spirit_library_s *spirit,
  *              is in the correct range [-PA_LOWER_LIMIT: PA_UPPER_LIMIT] dBm.
  *
  * Returned Value:
- *   None.
+ *   Zero (OK) on success; a negated errno value on failure.
  *
  ******************************************************************************/
 
-void spirit_radio_set_palevel(FAR struct spirit_library_s *spirit,
-                              uint8_t ndx, float powerdbm);
+int spirit_radio_set_palevel(FAR struct spirit_library_s *spirit,
+                             uint8_t ndx, float powerdbm);
 
 /******************************************************************************
  * Name: spirit_radio_set_palevel_maxindex
@@ -198,11 +198,48 @@ void spirit_radio_set_palevel(FAR struct spirit_library_s *spirit,
  *            [0:7].
  *
  * Returned Value:
- *   None
+ *   Zero (OK) on success; a negated errno value on failure.
  *
  ******************************************************************************/
 
-void spirit_radio_set_palevel_maxindex(FAR struct spirit_library_s *spirit,
-                                       uint8_t ndx);
+int spirit_radio_set_palevel_maxindex(FAR struct spirit_library_s *spirit,
+                                      uint8_t ndx);
+
+/******************************************************************************
+ * Name: spirit_radio_afcfreezeonsync
+ *
+ * Description:
+ *   Enables or Disables the AFC freeze on sync word detection.
+ *
+ * Input Parameters:
+ *   spirit   - Reference to a Spirit library state structure instance
+ *   newstate - new state for AFC freeze on sync word detection.
+ *              This parameter can be: S_ENABLE or S_DISABLE.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_radio_afcfreezeonsync(FAR struct spirit_library_s *spirit,
+                                 enum spirit_functional_state_e newstate);
+
+/******************************************************************************
+ * Name: spirit_radio_persistentrx
+ *
+ * Description:
+ *   Enables or Disables the persistent RX mode.
+ *
+ * Input Parameters:
+ *   spirit   - Reference to a Spirit library state structure instance
+ *   newstate - New state of this mode.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_radio_persistentrx(FAR struct spirit_library_s *spirit,
+                              enum spirit_functional_state_e newstate);
 
 #endif /* __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_RADIO_H*/

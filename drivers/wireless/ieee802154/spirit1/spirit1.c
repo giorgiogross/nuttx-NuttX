@@ -67,6 +67,8 @@
 #include "spirit_commands.h"
 #include "spirit_radio.h"
 #include "spirit_pktbasic.h"
+#include "spirit_qi.h"
+#include "spirit_timer.h"
 
 #include <arch/board/board.h>
 
@@ -108,6 +110,7 @@ struct spirit1_dev_s
   struct spirit_library_s           spirit;    /* Spirit library state */
   FAR const struct spirit1_lower_s *lower;     /* Low-level MCU-specific support */
   struct work_s                     irqwork;   /* Interrupt continuation work queue support */
+  bool                              ifup;      /* Spirit is on and interface is up */
   uint8_t                           panid[2];  /* PAN identifier, ffff = not set */
   uint16_t                          saddr;     /* Short address, ffff = not set */
   uint8_t                           eaddr[8];  /* Extended address, ffffffffffffffff = not set */
@@ -254,52 +257,149 @@ int spirit1_initialize(FAR struct spirit1_dev_s *dev,
 
   /* Soft reset of Spirit1 core */
 
-  spirit_command(spirit, COMMAND_SRES);
+  ret = spirit_command(spirit, COMMAND_SRES);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  dev->ifup = false;
 
   /* Configure the Spirit1 radio part */
 
-  spirit_radio_initialize(spirit, &g_radio_init);
-  spirit_radio_set_palevel(spirit, 0, SPIRIT_POWER_DBM);
-  spirit_radio_set_palevel_maxindex(spirit, 0);
+  ret = spirit_radio_initialize(spirit, &g_radio_init);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  ret = spirit_radio_set_palevel(spirit, 0, SPIRIT_POWER_DBM);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  ret =spirit_radio_set_palevel_maxindex(spirit, 0);
+  if (ret < 0)
+    {
+      return ret;
+    }
 
   /* Configures the SPIRIT1 packet handling logic */
 
-  spirit_pktbasic_initialize(spirit, &g_pktbasic_init);
+  ret = spirit_pktbasic_initialize(spirit, &g_pktbasic_init);
+  if (ret < 0)
+    {
+      return ret;
+    }
 
   /* Enable the following interrupt sources, routed to GPIO */
 
-  spirit_irq_disable_all(spirit);
-  spirit_irq_clr_pending(spirit);
+  ret = spirit_irq_disable_all(spirit);
+  if (ret < 0)
+    {
+      return ret;
+    }
 
-  spirit_irq_enable(spirit, TX_DATA_SENT, S_ENABLE);
-  spirit_irq_enable(spirit, RX_DATA_READY, S_ENABLE);
-  spirit_irq_enable(spirit, VALID_SYNC, S_ENABLE);
-  spirit_irq_enable(spirit, RX_DATA_DISC, S_ENABLE);
-  spirit_irq_enable(spirit, TX_FIFO_ERROR, S_ENABLE);
-  spirit_irq_enable(spirit, RX_FIFO_ERROR, S_ENABLE);
+  ret = spirit_irq_clr_pending(spirit);
+  if (ret < 0)
+    {
+      return ret;
+    }
 
-#if 0
+  ret = spirit_irq_enable(spirit, TX_DATA_SENT, S_ENABLE);
+   if (ret < 0)
+    {
+      return ret;
+    }
+
+  ret = spirit_irq_enable(spirit, RX_DATA_READY, S_ENABLE);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  ret = spirit_irq_enable(spirit, VALID_SYNC, S_ENABLE);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  ret = spirit_irq_enable(spirit, RX_DATA_DISC, S_ENABLE);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  ret = spirit_irq_enable(spirit, TX_FIFO_ERROR, S_ENABLE);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  ret = spirit_irq_enable(spirit, RX_FIFO_ERROR, S_ENABLE);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
   /* Configure Spirit1 */
 
-  SpiritRadioPersistenRx(S_ENABLE);
-  SpiritQiSetSqiThreshold(SQI_TH_0);
-  SpiritQiSqiCheck(S_ENABLE);
-  SpiritQiSetRssiThresholddBm(CCA_THRESHOLD);
-  SpiritTimerSetRxTimeoutStopCondition(SQI_ABOVE_THRESHOLD);
-  SET_INFINITE_RX_TIMEOUT();
-  SpiritRadioAFCFreezeOnSync(S_ENABLE);
+  ret = spirit_radio_persistentrx(spirit, S_ENABLE);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  ret = spirit_qi_set_sqithreshold(spirit, SQI_TH_0);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  ret = spirit_qi_sqicheck(spirit, S_ENABLE);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  ret = spirit_qi_set_rssithreshold(spirit, SPIRIT_CCA_THRESHOLD);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  ret = spirit_timer_set_rxtimeout_stopcondition(spirit,
+                                                 SQI_ABOVE_THRESHOLD);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  ret = spirit_timer_set_rxtimeout(spirit, 0); /* 0=No timeout */
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  ret = spirit_radio_afcfreezeonsync(spirit, S_ENABLE);
+  if (ret < 0)
+    {
+      return ret;
+    }
 
   /* Puts the SPIRIT1 in STANDBY mode (125us -> rx/tx) */
 
-  spirit_command(spirit, SPIRIT1_STROBE_STANDBY);
-  spirit_on = OFF;
-  CLEAR_RXBUF();
-  CLEAR_TXBUF();
-#endif
+  ret = spirit_command(spirit, CMD_STANDBY);
+  if (ret < 0)
+    {
+      return ret;
+    }
 
   /* Configure the radio to route the IRQ signal to its GPIO 3 */
 
-  return spirit_gpio_initialize(spirit, &g_gpioinit);
+  ret = spirit_gpio_initialize(spirit, &g_gpioinit);
+  return ret;
 }
 
 /****************************************************************************
@@ -318,6 +418,7 @@ FAR struct ieee802154_radio_s *spirit1_init(FAR struct spi_dev_s *spi,
                                             FAR const struct spirit1_lower_s *lower)
 {
   FAR struct spirit1_dev_s *dev;
+  int ret;
 
   /* Allocate a driver state structure instance */
 
@@ -325,6 +426,7 @@ FAR struct ieee802154_radio_s *spirit1_init(FAR struct spi_dev_s *spi,
   if (dev == NULL)
     {
       wlerr("ERROR: Failed to allocate device structure\n");
+      return NULL;
     }
 
   /* Attach the interface, lower driver, and devops */
@@ -335,9 +437,10 @@ FAR struct ieee802154_radio_s *spirit1_init(FAR struct spi_dev_s *spi,
 
   /* Attach irq */
 
-  if (lower->attach(lower, spirit1_interrupt, dev) != OK)
+  ret = lower->attach(lower, spirit1_interrupt, dev);
+  if (ret < 0)
     {
-      return NULL;
+      goto errout_with_alloc;
     }
 
   //sem_init(&dev->ieee.rxsem, 0, 0);
@@ -345,7 +448,12 @@ FAR struct ieee802154_radio_s *spirit1_init(FAR struct spi_dev_s *spi,
 
   /* Initialize device */
 
-  spirit1_initialize(dev, spi);
+  ret = spirit1_initialize(dev, spi);
+  if (ret < 0)
+    {
+      wlerr("ERROR: spirit1_initialize failed: %d\n", ret);
+      goto errout_with_attach;
+    }
 
   /* Put the Device to RX ON Mode */
 
@@ -353,4 +461,11 @@ FAR struct ieee802154_radio_s *spirit1_init(FAR struct spi_dev_s *spi,
 
   lower->enable(lower, true);
   return &dev->ieee;
+
+errout_with_attach:
+  (void)lower->attach(lower, NULL, NULL);
+
+errout_with_alloc:
+  kmm_free(dev);
+  return NULL;
 }

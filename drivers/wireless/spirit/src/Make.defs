@@ -30,13 +30,13 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-#
+#-
 ############################################################################
 
 # Include Spirit driver source files in the build
 
-CSRCS += spirit_radio.c spirit_pktbasic.c spirit_irq.c spirit_gpio.c
-CSRCS += spirit_spi.c
+CSRCS += spirit_radio.c spirit_pktbasic.c spirit_qi.c spirit_irq.c
+CSRCS += spirit_timer.c spirit_gpio.c spirit_spi.c
 
 # Include Spirit driver build support
 

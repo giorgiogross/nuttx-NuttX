@@ -132,4 +132,4 @@ enum spirit_version_e
  *
  ******************************************************************************/
 
-#endif /* __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_GENERAL_H*/
+#endif /* __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_GENERAL_H */

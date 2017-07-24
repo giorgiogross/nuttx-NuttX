@@ -113,8 +113,8 @@ int spirit_radio_initialize(FAR struct spirit_library_s *spirit,
  *
  ******************************************************************************/
 
-void spirit_radio_set_palevel(FAR struct spirit_library_s *spirit,
-                              uint8_t ndx, float powerdbm)
+int spirit_radio_set_palevel(FAR struct spirit_library_s *spirit,
+                             uint8_t ndx, float powerdbm)
 {
 #warning Missing logic
 }
@@ -131,12 +131,108 @@ void spirit_radio_set_palevel(FAR struct spirit_library_s *spirit,
  *            [0:7].
  *
  * Returned Value:
- *   None
+ *   Zero (OK) on success; a negated errno value on failure.
  *
  ******************************************************************************/
 
-void spirit_radio_set_palevel_maxindex(FAR struct spirit_library_s *spirit,
-                                       uint8_t ndx)
+int spirit_radio_set_palevel_maxindex(FAR struct spirit_library_s *spirit,
+                                      uint8_t ndx)
 {
 #warning Missing logic
 }
+
+/******************************************************************************
+ * Name: spirit_radio_afcfreezeonsync
+ *
+ * Description:
+ *   Enables or Disables the AFC freeze on sync word detection.
+ *
+ * Input Parameters:
+ *   spirit   - Reference to a Spirit library state structure instance
+ *   newstate - new state for AFC freeze on sync word detection.
+ *              This parameter can be: S_ENABLE or S_DISABLE.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_radio_afcfreezeonsync(FAR struct spirit_library_s *spirit,
+                                 enum spirit_functional_state_e newstate)
+{
+  uint8_t regval = 0;
+  int ret;
+
+  /* Check the parameters */
+
+  DEBUGASSERT(IS_SPIRIT_FUNCTIONAL_STATE(newstate));
+
+  /* Reads the AFC_2 register and configure the AFC Freeze on Sync field */
+
+  ret = spirit_reg_read(spirit, AFC2_BASE, &regval, 1);
+  if (ret >= 0)
+    {
+      if (newstate == S_ENABLE)
+        {
+          regval |= AFC2_AFC_FREEZE_ON_SYNC_MASK;
+        }
+      else
+        {
+          regval &= (~AFC2_AFC_FREEZE_ON_SYNC_MASK);
+        }
+
+      /* Sets the AFC_2 register */
+
+      ret = spirit_reg_write(spirit, AFC2_BASE, &regval, 1);
+    }
+
+  return ret;
+}
+
+/******************************************************************************
+ * Name: spirit_radio_persistentrx
+ *
+ * Description:
+ *   Enables or Disables the persistent RX mode.
+ *
+ * Input Parameters:
+ *   spirit   - Reference to a Spirit library state structure instance
+ *   newstate - New state of this mode.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_radio_persistentrx(FAR struct spirit_library_s *spirit,
+                              enum spirit_functional_state_e newstate)
+{
+  uint8_t regval = 0;
+  int ret;
+
+  /* Check the parameters */
+
+  DEBUGASSERT(IS_SPIRIT_FUNCTIONAL_STATE(newstate));
+
+  /* Reads the PROTOCOL0_BASE and mask the PROTOCOL0_PERS_RX_MASK bitfield */
+
+  ret = spirit_reg_read(spirit, PROTOCOL0_BASE, &regval, 1);
+  if (ret >= 0)
+    {
+      if (newstate == S_ENABLE)
+        {
+          regval |= PROTOCOL0_PERS_RX_MASK;
+        }
+      else
+        {
+          regval &= (~PROTOCOL0_PERS_RX_MASK);
+        }
+
+      /* Writes the new value in the PROTOCOL0_BASE register */
+
+      ret = spirit_reg_write(spirit, PROTOCOL0_BASE, &regval, 1);
+    }
+
+  return ret;
+}
+

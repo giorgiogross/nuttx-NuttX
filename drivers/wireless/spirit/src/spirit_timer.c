@@ -1,6 +1,6 @@
 /******************************************************************************
- * drivers/wireless/spirit/spirit_pktbasic.c
- * Configuration and management of SPIRIT Basic packets.
+ * drivers/wireless/spirit/spirit_timer.c
+ * Configuration and management of SPIRIT timers.
  *
  *   Copyright(c) 2015 STMicroelectronics
  *   Author: VMA division - AMS
@@ -38,14 +38,19 @@
  * Included Files
  ******************************************************************************/
 
-#include <errno.h>
+#include <assert.h>
 
-#include "spirit_pktbasic.h"
+#include "spirit_timer.h"
+#include "spirit_radio.h"
 #include "spirit_spi.h"
 
 /******************************************************************************
  * Pre-processor Definitions
  ******************************************************************************/
+
+/* Returns the absolute value. */
+
+#define S_ABS(a) ((a) > 0 ? (a) : -(a))
 
 /******************************************************************************
  * Private Functions
@@ -67,26 +72,70 @@
  ******************************************************************************/
 
 /******************************************************************************
- * Name: spirit_pktbasic_initialize
+ * Name: spirit_timer_set_rxtimeout
  *
  * Description:
- *   Initializes the Spirit Basic packet according to the specified parameters
- *   in the struct pktbasic_init_s.  Notice that this function sets the
- *   autofiltering option on CRC if it is set to any value different from
- *   BASIC_NO_CRC.
+ *   Sets the RX timeout timer counter.  If 'counter' is equal to 0 the
+ *   timeout is disabled.
  *
  * Input Parameters:
- *   spirit   - Reference to a Spirit library state structure instance
- *   pktpasic - Basic packet init structure.
+ *   spirit  - Reference to a Spirit library state structure instance
+ *   counter - value for the timer counter.
  *
  * Returned Value:
  *   Zero (OK) on success; a negated errno value on failure.
  *
  ******************************************************************************/
 
-int spirit_pktbasic_initialize(FAR struct spirit_library_s *spirit,
-                               FAR const struct pktbasic_init_s *pktpasic)
+int spirit_timer_set_rxtimeout(FAR struct spirit_library_s *spirit,
+                               uint8_t counter)
 {
-#warning Missing logic
-  return -ENOSYS;
+  /* Writes the counter value for RX timeout in the corresponding register */
+
+  return spirit_reg_write(spirit, TIMERS4_RX_TIMEOUT_COUNTER_BASE, &counter, 1);
+}
+
+/******************************************************************************
+ * Name: spirit_timer_set_rxtimeout_stopcondition
+ *
+ * Description:
+ *   Sets the RX timeout stop conditions.
+ *
+ * Input Parameters:
+ *   spirit        - Reference to a Spirit library state structure instance
+ *   stopcondition - New stop condition.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_timer_set_rxtimeout_stopcondition(FAR struct spirit_library_s *spirit,
+                                             enum spirit_rxtimeout_stopcondition_e
+                                             stopcondition)
+{
+  uint8_t regval[2];
+  int ret;
+
+  /* Check the parameters */
+
+  DEBUGASSERT(IS_RX_TIMEOUT_STOP_CONDITION(stopcondition));
+
+  /* Reads value on the PKT_FLT_OPTIONS and PROTOCOL2 register */
+
+  ret = spirit_reg_read(spirit, PCKT_FLT_OPTIONS_BASE, regval, 2);
+  if (ret >= 0)
+    {
+      regval[0] &= 0xbf;
+      regval[0] |= ((stopcondition & 0x08) << 3);
+
+      regval[1] &= 0x1f;
+      regval[1] |= (stopcondition << 5);
+
+      /* Write value to the PKT_FLT_OPTIONS and PROTOCOL2 register */
+
+      ret = spirit_reg_write(spirit, PCKT_FLT_OPTIONS_BASE, regval, 2);
+    }
+
+  return ret;
 }
