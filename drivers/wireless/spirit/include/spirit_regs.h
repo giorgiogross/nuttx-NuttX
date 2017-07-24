@@ -84,7 +84,7 @@
 #define ANA_FUNC_CONF1_SET_BLD_LVL_MASK ((uint8_t)0x03)  /* Mask of the SET_BLD_LV field of
                                                           * ANA_FUNC_CONF1 register (R/W) */
 #define BLD_LVL_2_7                     ((uint8_t)0x00)  /* Sets the Battery Level Detector threshold
-                                                          * to 
+                                                          * to
  2.7V */
 #define BLD_LVL_2_5                     ((uint8_t)0x01)  /* Sets the Battery Level Detector threshold
                                                           * to 2.5V */
@@ -129,7 +129,7 @@
 #define HIGH_POWER_MODE_MASK            ((uint8_t)0x08)  /* SET_SMPS_LEVEL word will be set to the
                                                           * value to PM_TEST register in RX state,
                                                           * while in TX state it will be fixed to
-                                                          * 111 (which programs the SMPS output at 
+                                                          * 111 (which programs the SMPS output at
                                                           * max value, 1.8V) */
 #define BROWN_OUT_MASK                  ((uint8_t)0x04)  /* Accurate Brown-Out detection on/off */
 #define BATTERY_LEVEL_MASK              ((uint8_t)0x02)  /* Battery level detector circuit on/off */
@@ -496,6 +496,7 @@
  *
  *   Read Write
  *   Default value: 0xa3
+ *
  *   7:0  IF_OFFSET_DIG[7:0]: Intermediate frequency setting for the digital shift-to-baseband
  *        circuits. According to the formula:
  *        fIF = fXO*(IF_OFFSET_ANA+64)/(12*2^10) = fCLK*(IF_OFFSET_DIG+64)/(12*2^10) Hz.
@@ -509,6 +510,7 @@
  *
  *   Read Write
  *   Default value: 0xa3
+ *
  *   7:0  IF_OFFSET_ANA[7:0]: Intermediate frequency setting for the digital shift-to-baseband
  *        circuits. According to the formula:
  *        fIF = fXO*(IF_OFFSET_ANA+64)/(12*2^10) = fCLK*(IF_OFFSET_DIG+64)/(12*2^10) Hz.
@@ -522,6 +524,7 @@
  *
  *   Read Write
  *   Default value: 0xa3
+ *
  *   7:4  Reserved.
  *   3:0  FC_OFFSET[11:8]: Carrier offset. This value is the higher part of a 12-bit 2’s complement integer
  *                         representing an offset in 99Hz(2) units added/subtracted to the
@@ -546,11 +549,11 @@
 
 #define FC_OFFSET0_BASE                 ((uint8_t)0x0f)  /* [7:0] -> [7:0] Carrier offset
                                                           * (lower part). This value is a 12-bit
-                                                          * 2’s complement integer representing 
+                                                          * 2’s complement integer representing
                                                           * an offset in fXO/2^18 (99Hz for 26
                                                           * MHz XO) units added/subtracted to
                                                           * the carrier frequency set by registers
-                                                          * SYNT3…SYNT0. Range is +/-200kHz with 26 
+                                                          * SYNT3…SYNT0. Range is +/-200kHz with 26
                                                           * MHz XO */
 
 /* PA_LEVEL_x_Registers */
@@ -709,12 +712,12 @@
 
 #define FDEV0_BASE                      ((uint8_t)0x1c)  /* Sets the Mantissa and exponent of
                                                           * frequency deviation (frequency
-                                                          * separation/2) and PLL or DLL 
+                                                          * separation/2) and PLL or DLL
                                                           * alogrithm from clock
                                                           * recovery in RX digital demod */
 
 #define FDEV0_CLOCK_REG_ALGO_SEL_MASK   ((uint8_t)0x08)  /* Can be DLL or PLL algorithm for
-                                                          * clock recovery in RX digital demod 
+                                                          * clock recovery in RX digital demod
                                                           * (see CLOCKREC reg) */
 #define FDEV0_CLOCK_REG_ALGO_SEL_PLL    ((uint8_t)0x00)  /* Sets PLL alogrithm for clock
                                                           * recovery in RX digital demod (see
@@ -1198,7 +1201,7 @@
                                                           * Manchester */
 #define MBUS_CTRL_MBUS_SUBMODE_S2_S1M_T2_OTHER ((uint8_t)0x02)
                                                          /* MBUS sub-modes S2, S1-m, T2 (only
-                                                          * other to meter) short header, header 
+                                                          * other to meter) short header, header
                                                           * length min 15, sync 0x7696, Manchester */
 #define MBUS_CTRL_MBUS_SUBMODE_T1_T2_METER ((uint8_t)0x06)
                                                          /* MBUS sub-modes T1, T2 (only meter
@@ -1215,16 +1218,16 @@
  */
 
 #define PCKT_FLT_GOALS_CONTROL0_MASK_BASE ((uint8_t)0x42)
-                                                         /* Packet control field #3 mask, all 0s 
+                                                         /* Packet control field #3 mask, all 0s
                                                           * -> no filtering */
 #define PCKT_FLT_GOALS_CONTROL1_MASK_BASE ((uint8_t)0x43)
-                                                         /* Packet control field #2 mask, all 0s 
+                                                         /* Packet control field #2 mask, all 0s
                                                           * -> no filtering */
 #define PCKT_FLT_GOALS_CONTROL2_MASK_BASE ((uint8_t)0x44)
-                                                         /* Packet control field #1 mask, all 0s 
+                                                         /* Packet control field #1 mask, all 0s
                                                           * -> no filtering */
 #define PCKT_FLT_GOALS_CONTROL3_MASK_BASE ((uint8_t)0x45)
-                                                         /* Packet control field #0 mask, all 0s 
+                                                         /* Packet control field #0 mask, all 0s
                                                           * -> no filtering */
 
 /* PCKT_FLT_GOALS_CONTROLx_FIELD registers
@@ -1286,7 +1289,7 @@
  */
 
 #define PCKT_FLT_GOALS_TX_ADDR_BASE     ((uint8_t)0x4e)  /* Address of the destination (also
-                                                          * device own address) 
+                                                          * device own address)
 */
 
 /* PCKT_FLT_OPTIONS register
@@ -1314,14 +1317,14 @@
 
 #define PCKT_FLT_OPTIONS_CRC_CHECK_MASK ((uint8_t)0x01)  /* Enable/disable of CRC check: packet
                                                           * is discarded if CRC is not valid [RX] */
-#define PCKT_FLT_OPTIONS_DEST_VS_BROADCAST_ADDR_MASK ((uint8_t)0x02) 
-                                                         /* Packet discarded if destination address 
+#define PCKT_FLT_OPTIONS_DEST_VS_BROADCAST_ADDR_MASK ((uint8_t)0x02)
+                                                         /* Packet discarded if destination address
                                                           * differs from BROADCAST register [RX] */
 #define PCKT_FLT_OPTIONS_DEST_VS_MULTICAST_ADDR_MASK ((uint8_t)0x04)
-                                                         /* Packet discarded if destination address 
+                                                         /* Packet discarded if destination address
                                                           * differs from MULTICAST register [RX] */
 #define PCKT_FLT_OPTIONS_DEST_VS_TX_ADDR_MASK ((uint8_t)0x08)
-                                                         /* Packet discarded if destination address 
+                                                         /* Packet discarded if destination address
                                                           * differs from TX_ADDR register [RX] */
 #define PCKT_FLT_OPTIONS_SOURCE_FILTERING_MASK ((uint8_t)0x10)
                                                          /* Packet discarded if source address
@@ -1334,7 +1337,7 @@
                                                           * the CONTROLx_MASK register) differs
                                                           * from CONTROLx_FIELD register [RX] */
 #define PCKT_FLT_OPTIONS_RX_TIMEOUT_AND_OR_SELECT ((uint8_t)0x40)
-                                                         /* Logical function applied to CS/SQI/PQI 
+                                                         /* Logical function applied to CS/SQI/PQI
                                                           * values (masked by [7:5] bits i
                                                           * PROTOCOL[2] register) */
 
@@ -1368,7 +1371,7 @@
  */
 
 #define TX_PCKT_INFO_BASE               ((uint8_t)0xc2)  /* Current TX packet sequence number
-                                                          * [5:4]; Number of retransmissions done 
+                                                          * [5:4]; Number of retransmissions done
                                                           * on the last TX packet [3:0] */
 
 /* RX_PCKT_INFO registers
@@ -1411,7 +1414,7 @@
  *                             RX_PCKT_LEN=RX_PCKT_LEN1 × 256 + RX_PCKT_LEN0
  *                             This value is packet_length%256
  */
-#define RX_PCKT_LEN0_BASE               ((uint8_t)0xca)  /* RX_PCKT_LEN=RX_PCKT_LEN1 
+#define RX_PCKT_LEN0_BASE               ((uint8_t)0xca)  /* RX_PCKT_LEN=RX_PCKT_LEN1
                                                           * × 256 + RX_PCKT_LEN0 */
 
 /* CRC_FIELD[2:0] registers
@@ -1503,7 +1506,7 @@
                                                           * filtering mode */
 #define PROTOCOL1_CSMA_PERS_ON_MASK     ((uint8_t)0x02)  /* Enable/disable CSMA persistent
                                                           * (no back-off) */
-#define PROTOCOL1_CSMA_ON_MASK          ((uint8_t)0x04)  /* Enable/disable CSMA channel 
+#define PROTOCOL1_CSMA_ON_MASK          ((uint8_t)0x04)  /* Enable/disable CSMA channel
                                                           * access mode */
 #define PROTOCOL1_SEED_RELOAD_MASK      ((uint8_t)0x08)  /* Reloads the seed of the PN generator
                                                           * for CSMA procedure */
@@ -1611,28 +1614,15 @@
  *
  *   Default value: 0x00
  *   Read Write
- *   7:0     BU_COUNTER_SEED_LSByte: Seed of the random number generator used to apply the BEB (Binary Exponential Backoff) algorithm (LSB)
+ *
+ *   7:0     BU_COUNTER_SEED_LSByte: Seed of the random number generator used to apply
+ *           the BEB (Binary Exponential Backoff) algorithm (LSB)
  */
 
-#define CSMA_CONFIG2_BASE               ((uint8_t)0x65)  /*
- CSMA/CA: 
- Seed 
- of
- the
- random 
- number 
- generator 
- used 
- to
- apply 
- the
- BEB
- (Binary 
- Exponential 
- Backoff) 
- algorithm 
- (LSB) 
-*/
+#define CSMA_CONFIG2_BASE               ((uint8_t)0x65)  /* CSMA/CA: Seed of the random
+                                                          * number generator used to apply
+                                                          * the BEB (Binary Exponential
+                                                          * Backoff) algorithm (LSB)*/
 
 /* CSMA_CONFIG1 registers
  *
@@ -1768,9 +1758,9 @@
                                                          /* Peak decay control for OOK:
                                                           * medium_fast decay */
 #define RSSI_FLT_OOK_PEAK_DECAY_MEDIUM_SLOW ((uint8_t)0x02)
-                                                         /* Peak decay control for OOK: 
+                                                         /* Peak decay control for OOK:
                                                           * medium_slow decay */
-#define RSSI_FLT_OOK_PEAK_DECAY_SLOW    ((uint8_t)0x03)  /* Peak decay control for OOK: slow 
+#define RSSI_FLT_OOK_PEAK_DECAY_SLOW    ((uint8_t)0x03)  /* Peak decay control for OOK: slow
                                                           * decay */
 
 /* RSSI_TH register
@@ -2103,7 +2093,7 @@
                                                           * startup timer expiration (see reg
                                                           * PM_START_COUNTER, 0xb5) */
 #define IRQ_MASK2_XO_COUNT_EXPIRED      ((uint8_t)0x80)  /* IRQ: only for debug; Crystal
-                                                          * oscillator settling time counter 
+                                                          * oscillator settling time counter
                                                           * expired */
 
 /* IRQ_MASK3 registers
@@ -2128,7 +2118,7 @@
 
 #define IRQ_MASK3_BASE                  ((uint8_t)0x90)  /* IRQ_MASK is split into 4 registers */
 
-#define IRQ_MASK3_SYNTH_LOCK_TIMEOUT    ((uint8_t)0x01)  /* IRQ: only for debug; LOCK state 
+#define IRQ_MASK3_SYNTH_LOCK_TIMEOUT    ((uint8_t)0x01)  /* IRQ: only for debug; LOCK state
                                                           * timeout */
 #define IRQ_MASK3_SYNTH_LOCK_STARTUP    ((uint8_t)0x02)  /* IRQ: only for debug; see
                                                           * CALIBR_START_COUNTER */
@@ -2136,7 +2126,7 @@
                                                           * calibration timeout */
 #define IRQ_MASK3_TX_START_TIME         ((uint8_t)0x08)  /* IRQ: only for debug; TX circuitry
                                                           * startup time; see TX_START_COUNTER */
-#define IRQ_MASK3_RX_START_TIME         ((uint8_t)0x10)  /* IRQ: only for debug; RX circuitry 
+#define IRQ_MASK3_RX_START_TIME         ((uint8_t)0x10)  /* IRQ: only for debug; RX circuitry
                                                           * startup time; see TX_START_COUNTER */
 #define IRQ_MASK3_RX_TIMEOUT            ((uint8_t)0x20)  /* IRQ: RX operation timeout */
 #define IRQ_MASK3_AES_END               ((uint8_t)0x40)  /* IRQ: AES End of operation */
@@ -2169,7 +2159,7 @@
 #define IRQ_STATUS0_SYNTH_CAL_TIMEOUT   ((uint8_t)0x04)  /* IRQ: SYNTH locking timeout */
 #define IRQ_STATUS0_TX_START_TIME       ((uint8_t)0x08)  /* IRQ: only for debug; TX circuitry
                                                           * startup time; see TX_START_COUNTER */
-#define IRQ_STATUS0_RX_START_TIME       ((uint8_t)0x10)  /* IRQ: only for debug; RX circuitry 
+#define IRQ_STATUS0_RX_START_TIME       ((uint8_t)0x10)  /* IRQ: only for debug; RX circuitry
                                                           * startup time; see TX_START_COUNTER */
 #define IRQ_STATUS0_RX_TIMEOUT          ((uint8_t)0x20)  /* IRQ: RX operation timeout expiration */
 #define IRQ_STATUS0_AES_END             ((uint8_t)0x40)  /* IRQ: AES End of operation */
@@ -2201,11 +2191,11 @@
                                                           * MCU_CK_CONF_CLOCK_TAIL_X clock cycles */
 #define IRQ_STATUS1_LOW_BATT_LVL        ((uint8_t)0x04)  /* IRQ: Battery level below threshold */
 #define IRQ_STATUS1_POR                 ((uint8_t)0x08)  /* IRQ: Power On Reset */
-#define IRQ_STATUS1_BOR                 ((uint8_t)0x10)  /* IRQ: Brown out event (both accurate 
+#define IRQ_STATUS1_BOR                 ((uint8_t)0x10)  /* IRQ: Brown out event (both accurate
                                                           * and inaccurate) */
 #define IRQ_STATUS1_LOCK                ((uint8_t)0x20)  /* IRQ: LOCK state in steady condition */
 #define IRQ_STATUS1_PM_COUNT_EXPIRED    ((uint8_t)0x40)  /* IRQ: Power Management startup timer
-                                                          * expiration (see reg PM_START_COUNTER, 
+                                                          * expiration (see reg PM_START_COUNTER,
                                                           * 0xb5) */
 #define IRQ_STATUS1_XO_COUNT_EXPIRED    ((uint8_t)0x80)  /* IRQ: Crystal oscillator settling
                                                           * time counter expired */
@@ -2315,7 +2305,7 @@
  */
 
 #define MC_STATE0_BASE                  ((uint8_t)0xc1)  /* MC_STATE0 register address. In this
-                                                          * version ALL existing states have 
+                                                          * version ALL existing states have
                                                           * been inserted and are still to be
                                                           * verified */
 
@@ -2323,14 +2313,14 @@
 
 #define SYNTH_CONFIG1_BASE              ((uint8_t)0x9e)  /* Synthesizier registers: M, A, K
                                                           * data sync on positive/negative
-                                                          * clock edges [4], Enable Linearization 
+                                                          * clock edges [4], Enable Linearization
                                                           * of the charge pump [3], split time
                                                           * 1.75/3.45ns [2], VCO calibration window
                                                           * 16,32,64,128 clock cycles [1:0] */
 #define SYNTH_CONFIG0_BASE              ((uint8_t)0x9f)  /* Enable DSM randomizer [7], Window width
                                                           * 1.2-7.5ns (Down-up) of lock detector */
 #define VCOTH_BASE                      ((uint8_t)0xa0)  /* Controls the threshold frequency
-                                                          * between VCO low and VCO high [7:0] VCOth 
+                                                          * between VCO low and VCO high [7:0] VCOth
                                                           * frequency=2*fXO*(96+VCO_TH/16),
                                                           * fmin=4992 MHz, fmax=5820 MHz */
 #define PM_CONFIG2_BASE                 ((uint8_t)0xa4)  /* Enables high current buffer on
@@ -2353,21 +2343,21 @@
 #define COMMAND_STANDBY                 ((uint8_t)0x63)  /* Go to STANDBY; valid only from READY */
 #define COMMAND_SLEEP                   ((uint8_t)0x64)  /* Go to SLEEP; valid only from READY */
 #define COMMAND_LOCKRX                  ((uint8_t)0x65)  /* Go to LOCK state by using the RX
-                                                          * configuration of the synth; valid 
+                                                          * configuration of the synth; valid
                                                           * only from READY */
 #define COMMAND_LOCKTX                  ((uint8_t)0x66)  /* Go to LOCK state by using the TX
-                                                          * configuration of the synth; valid 
+                                                          * configuration of the synth; valid
                                                           * only from READY */
 #define COMMAND_SABORT                  ((uint8_t)0x67)  /* Force exit form TX or RX states and
                                                           * go to READY state; valid only from
                                                           * TX or RX */
 #define COMMAND_LDC_RELOAD              ((uint8_t)0x68)  /* LDC Mode: Reload the LDC timer with
-                                                          * the value stored in the LDC_PRESCALER 
+                                                          * the value stored in the LDC_PRESCALER
                                                           * / COUNTER registers; valid from all
                                                           * states */
 #define COMMAND_SEQUENCE_UPDATE         ((uint8_t)0x69)  /* Autoretransmission: Reload the
                                                           * Packet sequence counter with the
-                                                          * value stored in the PROTOCOL[2] 
+                                                          * value stored in the PROTOCOL[2]
                                                           * register valid from all states */
 #define COMMAND_AES_ENC                 ((uint8_t)0x6a)  /* AES: Start the encryption routine;
                                                           * valid from all states */
@@ -2379,7 +2369,7 @@
                                                           * all states */
 #define COMMAND_AES_KEY_DEC             ((uint8_t)0x6d)  /* AES: Compute the key and start the
                                                           * decryption; valid from all states */
-#define COMMAND_SRES                    ((uint8_t)0x70)  /* Reset of all digital part, except 
+#define COMMAND_SRES                    ((uint8_t)0x70)  /* Reset of all digital part, except
                                                           * SPI registers */
 #define COMMAND_FLUSHRXFIFO             ((uint8_t)0x71)  /* Clean the RX FIFO; valid from all
                                                           * states */

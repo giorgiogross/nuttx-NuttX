@@ -1,13 +1,13 @@
 /******************************************************************************
- * include/nuttx/wireless/spirit/spirit_management.h
+ * drivers/wireless/spirit/spirit_management.c
  * The management layer for SPIRIT1 library.
  *
- *   Copyright(c) 2015 STMicroelectronics
- *   Author: VMA division - AMS
- *   Version 3.2.2 08-July-2015
+ *  Copyright(c) 2015 STMicroelectronics
+ *  Author: VMA division - AMS
+ *  Version 3.2.2 08-July-2015
  *
- *   Adapted for NuttX by:
- *   Author:  Gregory Nutt <gnutt@nuttx.org>
+ *  Adapted for NuttX by:
+ *  Author:  Gregory Nutt <gnutt@nuttx.org>
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -34,29 +34,37 @@
  *
  ******************************************************************************/
 
-#ifndef __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_MANAGEMENT_H
-#define __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_MANAGEMENT_H
-
 /******************************************************************************
  * Included Files
  ******************************************************************************/
 
-#include "spirit_config.h"
-#include "spirit_types.h"
+#include "spirit_management.h"
 
 /******************************************************************************
  * Pre-processor Definitions
  ******************************************************************************/
 
-/* Macros used in assertions */
+#define COMMUNICATION_STATE_TX          0
+#define COMMUNICATION_STATE_RX          1
+#define COMMUNICATION_STATE_NONE        2
 
 /******************************************************************************
- * Public Types
+ * Private Functions
  ******************************************************************************/
 
+/******************************************************************************
+ * Name:
+ *
+ * Description:
+ *
+ * Parameters:
+ *
+ * Returned Value:
+ *
+ ******************************************************************************/
 
 /******************************************************************************
- * Public Function Prototypes
+ * Public Functions
  ******************************************************************************/
 
 /******************************************************************************
@@ -74,6 +82,9 @@
  ******************************************************************************/
 
 void spirit_management_initcommstate(FAR struct spirit_library_s *spirit,
-                                     uint32_t frequency);
+                                     uint32_t frequency)
+{
+  spirit->commstate     = COMMUNICATION_STATE_NONE;
+  spirit->commfrequency = frequency;
+}
 
-#endif /* __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_MANAGEMENT_H */

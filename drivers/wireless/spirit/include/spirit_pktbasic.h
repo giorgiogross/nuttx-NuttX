@@ -196,7 +196,7 @@ int spirit_pktbasic_initialize(FAR struct spirit_library_s *spirit,
                                FAR const struct pktbasic_init_s *pktpasic);
 
 /******************************************************************************
- * Name: 
+ * Name:
  *
  * Description:
  *

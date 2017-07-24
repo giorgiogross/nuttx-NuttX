@@ -78,7 +78,7 @@ extern "C"
 enum spirit_functional_state_e
 {
   S_DISABLE = 0,
-  S_ENABLE  = !S_DISABLE
+  S_ENABLE  = 1
 };
 
 /* Spirit Flag status. Used to control the state of a flag. */
@@ -86,7 +86,7 @@ enum spirit_functional_state_e
 enum spirit_flag_status_e
 {
   S_RESET = 0,
-  S_SET   = !S_RESET
+  S_SET   = 1
 };
 
 /* SPIRIT States enumeration. */
@@ -142,14 +142,17 @@ struct spirit_status_s
 
 struct spirit_library_s
 {
-  FAR struct spi_dev_s *spi;         /* Contained SPI device instance */
-  uint32_t xtal_frequency;           /* Crystal frequency */
+  FAR struct spi_dev_s *spi;         /* SPI:   Contained SPI device instance */
+  uint32_t xtal_frequency;           /* RADIO: Crystal frequency */
+  uint32_t commfrequency;            /* MANAGEMENT: Desired communication frequency */
 
   union spirit_struct_u
   {
     struct spirit_status_s state;    /* State of the Spirit device */
     uint16_t u16;                    /* For alternative accesses */
   } u;
+
+  uint8_t commstate;                 /* MANAGEMENT: Communication state */
 };
 
 #ifdef __cplusplus

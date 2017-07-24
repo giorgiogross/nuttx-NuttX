@@ -1,7 +1,7 @@
 /******************************************************************************
  * include/nuttx/wireless/spirit/spirit_gpio.h
  * This file provides all the low level API to manage SPIRIT GPIO.
- * 
+ *
  *   Copyright(c) 2015 STMicroelectronics
  *   Author: VMA division - AMS
  *   Version 3.2.2 08-July-2015
@@ -135,7 +135,7 @@ enum spirit_gpio_io_e
                                                * active low) , default
                                                * configuration after POR */
   SPIRIT_GPIO_DIG_OUT_POR_INV        = 0x08,  /* POR inverted (active low) */
-  SPIRIT_GPIO_DIG_OUT_WUT_EXP        = 0x10,  /* Wake-Up Timer expiration: 
+  SPIRIT_GPIO_DIG_OUT_WUT_EXP        = 0x10,  /* Wake-Up Timer expiration:
                                                * "1" when WUT has expired */
   SPIRIT_GPIO_DIG_OUT_LBD            = 0x18,  /* Low battery detection: "1"
                                                * when battery is below
@@ -165,7 +165,7 @@ enum spirit_gpio_io_e
   SPIRIT_GPIO_DIG_OUT_RSSI_THRESHOLD = 0x80,  /* RSSI above threshold */
   SPIRIT_GPIO_DIG_OUT_MCU_CLOCK      = 0x88,  /* MCU Clock */
   SPIRIT_GPIO_DIG_OUT_TX_RX_MODE     = 0x90,  /* TX or RX mode indicator
-                                               * (to enable an external range 
+                                               * (to enable an external range
                                                * extender) */
   SPIRIT_GPIO_DIG_OUT_VDD            = 0x98,  /* VDD (to emulate an additional
                                                * GPIO of the MCU, programmable
@@ -215,7 +215,7 @@ struct spirit_gpio_init_s
  ******************************************************************************/
 
 /******************************************************************************
- * Name: 
+ * Name:
  *
  * Description:
  *   Initializes the Spirit GPIOx according to the specified parameters in

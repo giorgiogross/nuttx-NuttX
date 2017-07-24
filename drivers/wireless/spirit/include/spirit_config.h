@@ -1,6 +1,6 @@
 /******************************************************************************
- * include/nuttx/wireless/spirit/spirit_management.h
- * The management layer for SPIRIT1 library.
+ * include/nuttx/wireless/spirit/spirit_config.h
+ * Spirit Configuration and useful defines
  *
  *   Copyright(c) 2015 STMicroelectronics
  *   Author: VMA division - AMS
@@ -34,46 +34,13 @@
  *
  ******************************************************************************/
 
-#ifndef __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_MANAGEMENT_H
-#define __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_MANAGEMENT_H
+#ifndef __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_CONFIG_H
+#define __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_CONFIG_H
 
 /******************************************************************************
  * Included Files
  ******************************************************************************/
 
-#include "spirit_config.h"
-#include "spirit_types.h"
+#define DOUBLE_XTAL_THR  30000000
 
-/******************************************************************************
- * Pre-processor Definitions
- ******************************************************************************/
-
-/* Macros used in assertions */
-
-/******************************************************************************
- * Public Types
- ******************************************************************************/
-
-
-/******************************************************************************
- * Public Function Prototypes
- ******************************************************************************/
-
-/******************************************************************************
- * Name: spirit_management_initcommstate
- *
- * Description:
- *   Initialize communication state
- *
- * Input Parameters:
- *   spirit    - Reference to a Spirit library state structure instance
- *   frequency - Desired communication frequency
- *
- * Returned Value:
- *
- ******************************************************************************/
-
-void spirit_management_initcommstate(FAR struct spirit_library_s *spirit,
-                                     uint32_t frequency);
-
-#endif /* __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_MANAGEMENT_H */
+#endif /* __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_CONFIG_H */

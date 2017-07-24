@@ -86,7 +86,7 @@ enum spirit_rxtimeout_stopcondition_e
                                          * RSSI and PQI above threshold */
   SQI_AND_PQI_ABOVE_THRESHOLD  = 0x03,  /* Timeout stopped on both
                                          * SQI and PQI above threshold */
-  ALL_ABOVE_THRESHOLD          = 0x07,  /* Timeout stopped only if RSSI, SQI 
+  ALL_ABOVE_THRESHOLD          = 0x07,  /* Timeout stopped only if RSSI, SQI
                                          * and PQI are above threshold */
   RSSI_OR_SQI_ABOVE_THRESHOLD  = 0x0e,  /* Timeout stopped if one
                                          * between RSSI or SQI are
@@ -95,7 +95,7 @@ enum spirit_rxtimeout_stopcondition_e
                                          * between RSSI or PQI are
                                          * above threshold */
   SQI_OR_PQI_ABOVE_THRESHOLD   = 0x0b,  /* Timeout stopped if one
-                                         * between SQI or PQI are above 
+                                         * between SQI or PQI are above
                                          * threshold */
   ANY_ABOVE_THRESHOLD          = 0x0f   /* Timeout stopped if one among
                                          * RSSI, SQI or SQI are above threshold */

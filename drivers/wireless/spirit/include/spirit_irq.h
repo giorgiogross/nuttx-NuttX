@@ -265,9 +265,9 @@ enum spirit_irq_e
                                        * CALIBR_START_COUNTER */
   SYNTH_CAL_TIMEOUT    = 0x04000000,  /* IRQ: only for debug; SYNTH
                                        * calibration timeout */
-  TX_START_TIME        = 0x08000000,  /* IRQ: only for debug; TX circuitry 
+  TX_START_TIME        = 0x08000000,  /* IRQ: only for debug; TX circuitry
                                       * startup time; see TX_START_COUNTER */
-  RX_START_TIME        = 0x10000000,  /* IRQ: only for debug; RX circuitry 
+  RX_START_TIME        = 0x10000000,  /* IRQ: only for debug; RX circuitry
                                       * startup time; see TX_START_COUNTER */
   RX_TIMEOUT           = 0x20000000,  /* IRQ: RX operation timeout */
   AES_END              = 0x40000000,  /* IRQ: AES End of operation */
