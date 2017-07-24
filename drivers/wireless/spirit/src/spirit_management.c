@@ -87,4 +87,3 @@ void spirit_management_initcommstate(FAR struct spirit_library_s *spirit,
   spirit->commstate     = COMMUNICATION_STATE_NONE;
   spirit->commfrequency = frequency;
 }
-

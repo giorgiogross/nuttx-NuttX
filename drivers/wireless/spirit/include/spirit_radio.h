@@ -223,6 +223,9 @@
 
 #define IS_XTAL_FLAG(flag) \
   (((flag) == XTAL_FLAG_24_MHz) || ((flag) == XTAL_FLAG_26_MHz))
+#define IS_BAND_SELECTED(band) \
+  (((band) == HIGH_BAND)        || ((band) == MIDDLE_BAND)      || \
+   ((band) == LOW_BAND)         || ((band) == VERY_LOW_BAND))
 #define IS_MODULATION_SELECTED(mod) \
   (((mod)  == FSK)              || ((mod)  == GFSK_BT05)        || \
    ((mod)  == GFSK_BT1)         || ((mod)  == ASK_OOK)          || \
@@ -238,6 +241,16 @@ enum xtal_flag_e
 {
   XTAL_FLAG_24_MHz = 0x00,  /* 24 MHz Xtal selected */
   XTAL_FLAG_26_MHz = 0x01   /* 26 MHz Xtal selected */
+};
+
+/* SPIRIT Band enumeration */
+
+enum spirit_bandselect_e
+{
+  HIGH_BAND        = 0x00,  /* High_Band selected: from 779 MHz to 915 MHz */
+  MIDDLE_BAND      = 0x01,  /* Middle Band selected: from 387 MHz to 470 MHz */
+  LOW_BAND         = 0x02,  /* Low Band selected: from 300 MHz to 348 MHz */
+  VERY_LOW_BAND    = 0x03   /* Vary low Band selected: from 150 MHz to 174 MHz */
 };
 
 /* SPIRIT Modulation enumeration */
@@ -331,6 +344,100 @@ int spirit_radio_set_xtalflag(FAR struct spirit_library_s *spirit,
                               enum xtal_flag_e xtalflag);
 
 /******************************************************************************
+ * Name: spirit_radio_get_xtalflag
+ *
+ * Description:
+ *   Returns the Xtal configuration in the ANA_FUNC_CONF0 register.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   XtalFrequency Settled Xtal configuration.
+ *
+ ******************************************************************************/
+
+enum xtal_flag_e spirit_radio_get_xtalflag(FAR struct spirit_library_s *spirit);
+
+/******************************************************************************
+ * Name: spirit_radio_get_synthword
+ *
+ * Description:
+ *   Returns the synth word.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   32-bit Synth word.  Errors are not reported.
+ *
+ ******************************************************************************/
+
+uint32_t spirit_radio_get_synthword(FAR struct spirit_library_s *spirit);
+
+/******************************************************************************
+ * Name: spirit_radio_set_synthword
+ *
+ * Description:
+ *   Sets the SYNTH registers.
+ *
+ * Input Parameters:
+ *   spirit    - Reference to a Spirit library state structure instance
+ *   synthword - The synth word to write in the SYNTH[3:0] registers.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_radio_set_synthword(FAR struct spirit_library_s *spirit,
+                               uint32_t synthword);
+
+/******************************************************************************
+ * Name: spirit_radio_set_band
+ *
+ * Description:
+ *   Sets the operating band.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *   band   - The band to set.  This parameter can be one of following values:
+ *             HIGH_BAND      High_Band selected: from 779 MHz to 915 MHz
+ *             MIDDLE_BAND:   Middle Band selected: from 387 MHz to 470 MHz
+ *             LOW_BAND:      Low Band selected: from 300 MHz to 348 MHz
+ *             VERY_LOW_BAND: Very low Band selected: from 150 MHz to 174 MHz
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_radio_set_band(FAR struct spirit_library_s *spirit,
+                          enum spirit_bandselect_e band);
+
+/******************************************************************************
+ * Name: spirit_radio_get_band
+ *
+ * Description:
+ *   Returns the operating band.
+ *
+ * Input Parameters:
+ *   spirit    - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   BandSelect Settled band.  This returned value may be one of the
+ *   following values:
+ *     HIGH_BAND      High_Band selected: from 779 MHz to 915 MHz
+ *     MIDDLE_BAND:   Middle Band selected: from 387 MHz to 470 MHz
+ *     LOW_BAND:      Low Band selected: from 300 MHz to 348 MHz
+ *     VERY_LOW_BAND: Very low Band selected: from 150 MHz to 174 MHz
+ *
+ ******************************************************************************/
+
+enum spirit_bandselect_e
+  spirit_radio_get_band(FAR struct spirit_library_s *spirit);
+
+/******************************************************************************
  * Name: spirit_radio_set_basefrequency
  *
  * Description:
@@ -350,6 +457,22 @@ int spirit_radio_set_xtalflag(FAR struct spirit_library_s *spirit,
 
 int spirit_radio_set_basefrequency(FAR struct spirit_library_s *spirit,
                                    uint32_t fbase);
+
+/******************************************************************************
+ * Name: 
+ *
+ * Description:
+ *   Returns the base carrier frequency.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   Base carrier frequency expressed in Hz as unsigned word.
+ *
+ ******************************************************************************/
+
+uint32_t spirit_radio_get_basefrequency(FAR struct spirit_library_s *spirit);
 
 /******************************************************************************
  * Name: spirit_radio_convert_datarate
@@ -422,6 +545,28 @@ int spirit_radio_convert_freqdev(FAR struct spirit_library_s *spirit,
 int spirit_radio_convert_chbandwidth(FAR struct spirit_library_s *spirit,
                                      uint32_t bandwidth, FAR uint8_t *pcm,
                                      FAR uint8_t *pce);
+
+/******************************************************************************
+ * Name: spirit_radio_dbm2reg
+ *
+ * Description:
+ *   Returns the PA register value that corresponds to the passed dBm power.
+ *
+ *   NOTE: The power interpolation curves used by this function have been
+ *   extracted by measurements done on the divisional evaluation boards.
+ *
+ * Input Parameters:
+ *   spirit   - Reference to a Spirit library state structure instance
+ *   fbase    Frequency base expressed in Hz.
+ *   powerdbm Desired power in dBm.
+ *
+ * Returned Value:
+ *   Register value as byte.
+ *
+ ******************************************************************************/
+
+uint8_t spirit_radio_dbm2reg(FAR struct spirit_library_s *spirit,
+                             uint32_t fbase, float powerdbm);
 
 /******************************************************************************
  * Name: spirit_radio_set_palevel
@@ -501,6 +646,41 @@ int spirit_radio_afcfreezeonsync(FAR struct spirit_library_s *spirit,
 
 int spirit_radio_persistentrx(FAR struct spirit_library_s *spirit,
                               enum spirit_functional_state_e newstate);
+
+/******************************************************************************
+ * Name: spirit_radio_set_refdiv
+ *
+ * Description:
+ *   Enables or Disables the synthesizer reference divider.
+ *
+ * Input Parameters:
+ *   spirit   - Reference to a Spirit library state structure instance
+ *   newstate new state for synthesizer reference divider.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_radio_set_refdiv(FAR struct spirit_library_s *spirit,
+                            enum spirit_functional_state_e newstate);
+
+/******************************************************************************
+ * Name: spirit_radio_get_refdiv
+ *
+ * Description:
+ *   Get the the synthesizer reference divider state.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   S_ENABLE or S_DISABLE.  Errors are not reported.
+ *
+ ******************************************************************************/
+
+enum spirit_functional_state_e
+  spirit_radio_get_refdiv(FAR struct spirit_library_s *spirit);
 
 /******************************************************************************
  * Name: spirit_radio_enable_digdivider

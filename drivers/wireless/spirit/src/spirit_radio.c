@@ -68,6 +68,23 @@
  * Private Data
  ******************************************************************************/
 
+/* Factor is: B/2 used in the formula for SYNTH word calculation */
+
+static const uint8_t g_vectc_bhalf[4] =
+{
+  (HIGH_BAND_FACTOR / 2),
+  (MIDDLE_BAND_FACTOR / 2),
+  (LOW_BAND_FACTOR / 2),
+  (VERY_LOW_BAND_FACTOR / 2)
+};
+
+/* BS value to write in the SYNT0 register according to the selected band */
+
+static const uint8_t g_vectc_bandval[4] =
+{
+  SYNT0_BS_6, SYNT0_BS_12, SYNT0_BS_16, SYNT0_BS_32
+};
+
 /* It represents the available channel bandwidth times 10 for 26 Mhz xtal.
  * NOTE: The channel bandwidth for others xtal frequencies can be computed
  * since this table multiplying the current table by a factor
@@ -86,6 +103,30 @@ static const uint16_t g_vectn_bandwidth[90] =
     70,   66,   63,   59,   56,   53,   51,   46,   42,
     35,   33,   31,   30,   28,   27,   25,   23,   21,
     18,   17,   16,   15,   14,   13,   13,   12,   11
+};
+
+/* These values are used to interpolate the power curves.  Interpolation
+ * curves are linear in the following 3 regions:
+ *
+ * - reg value: 1 to 13    (up region)
+ * - reg value: 13 to 40   (mid region)
+ * - reg value: 41 to 90   (low region)
+ *
+ * power_reg = m*power_dBm + q
+ *
+ * For each band the order is: {m-up, q-up, m-mid, q-mid, m-low, q-low}.
+ *
+ * NOTE: The power interpolation curves have been extracted by
+ * measurements done on the divisional evaluation boards.
+ */
+
+static const float g_power_factors[5][6] =
+{
+  {-2.11, 25.66, -2.11, 25.66, -2.00, 31.28},   /* 915 */
+  {-2.04, 23.45, -2.04, 23.45, -1.95, 27.66},   /* 868 */
+  {-3.48, 38.45, -1.89, 27.66, -1.92, 30.23},   /* 433 */
+  {-3.27, 35.43, -1.80, 26.31, -1.89, 29.61},   /* 315 */
+  {-4.18, 50.66, -1.80, 30.04, -1.86, 32.22},   /* 169 */
 };
 
 /******************************************************************************
@@ -492,6 +533,202 @@ int spirit_radio_set_xtalflag(FAR struct spirit_library_s *spirit,
 }
 
 /******************************************************************************
+ * Name: spirit_radio_get_xtalflag
+ *
+ * Description:
+ *   Returns the Xtal configuration in the ANA_FUNC_CONF0 register.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   XtalFrequency Settled Xtal configuration.
+ *
+ ******************************************************************************/
+
+enum xtal_flag_e spirit_radio_get_xtalflag(FAR struct spirit_library_s *spirit)
+{
+  uint8_t regval;
+
+  /* Reads the Xtal configuration in the ANA_FUNC_CONF_0 register and return
+   * the value.
+   */
+
+  (void)spirit_reg_read(spirit, ANA_FUNC_CONF0_BASE, &regval, 1);
+
+  return (enum xtal_flag_e)((regval & 0x40) >> 6);
+}
+
+/******************************************************************************
+ * Name: spirit_radio_get_synthword
+ *
+ * Description:
+ *   Returns the synth word.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   32-bit Synth word.  Errors are not reported.
+ *
+ ******************************************************************************/
+
+uint32_t spirit_radio_get_synthword(FAR struct spirit_library_s *spirit)
+{
+  uint8_t regvalues[4];
+
+  /* Reads the SYNTH registers, build the synth word and return it */
+
+  (void)spirit_reg_read(spirit, SYNT3_BASE, regvalues, 4);
+  return ((((uint32_t) (regvalues[0] & 0x1f)) << 21) +
+          (((uint32_t) (regvalues[1])) << 13) +
+          (((uint32_t) (regvalues[2])) << 5) +
+          (((uint32_t) (regvalues[3])) >> 3));
+}
+
+/******************************************************************************
+ * Name: spirit_radio_set_synthword
+ *
+ * Description:
+ *   Sets the SYNTH registers.
+ *
+ * Input Parameters:
+ *   spirit    - Reference to a Spirit library state structure instance
+ *   synthword - The synth word to write in the SYNTH[3:0] registers.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_radio_set_synthword(FAR struct spirit_library_s *spirit,
+                               uint32_t synthword)
+{
+  uint8_t regvalues[4];
+  uint8_t synt0;
+  int ret;
+
+  /* Reads the SYNT0 register */
+
+  ret = spirit_reg_read(spirit, SYNT0_BASE, &synt0, 1);
+  if (ret < 0)
+    {
+      return ret;
+    }
+
+  /* Mask the Band selected field */
+
+  synt0 &= 0x07;
+
+  /* Build the array for SYNTH registers */
+
+  regvalues[0] = (uint8_t)((synthword >> 21) & (0x0000001f));
+  regvalues[1] = (uint8_t)((synthword >> 13) & (0x000000ff));
+  regvalues[2] = (uint8_t)((synthword >> 5) & (0x000000ff));
+  regvalues[3] = (uint8_t)(((synthword & 0x0000001f) << 3) | synt0);
+
+  /* Write the synth word to the SYNTH registers */
+
+  ret = spirit_reg_write(spirit, SYNT3_BASE, regvalues, 4);
+  return ret;
+}
+
+/******************************************************************************
+ * Name: spirit_radio_set_band
+ *
+ * Description:
+ *   Sets the operating band.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *   band   - The band to set.  This parameter can be one of following values:
+ *             HIGH_BAND      High_Band selected: from 779 MHz to 915 MHz
+ *             MIDDLE_BAND:   Middle Band selected: from 387 MHz to 470 MHz
+ *             LOW_BAND:      Low Band selected: from 300 MHz to 348 MHz
+ *             VERY_LOW_BAND: Very low Band selected: from 150 MHz to 174 MHz
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_radio_set_band(FAR struct spirit_library_s *spirit,
+                          enum spirit_bandselect_e band)
+{
+  uint8_t regval;
+  int ret;
+
+  /* Check the parameters */
+
+  DEBUGASSERT(IS_BAND_SELECTED(band));
+
+  /* Reads the SYNT0 register */
+
+  ret = spirit_reg_read(spirit, SYNT0_BASE, &regval, 1);
+  if (ret >= 0)
+    {
+      /* Mask the SYNTH[4;0] field and write the BS value */
+
+      regval &= 0xf8;
+      regval |= g_vectc_bandval[band];
+
+      /* Configures the SYNT0 register setting the operating band */
+
+      ret = spirit_reg_write(spirit, SYNT0_BASE, &regval, 1);
+    }
+
+  return ret;
+}
+
+/******************************************************************************
+ * Name: spirit_radio_get_band
+ *
+ * Description:
+ *   Returns the operating band.
+ *
+ * Input Parameters:
+ *   spirit    - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   BandSelect Settled band.  This returned value may be one of the
+ *   following values:
+ *     HIGH_BAND      High_Band selected: from 779 MHz to 915 MHz
+ *     MIDDLE_BAND:   Middle Band selected: from 387 MHz to 470 MHz
+ *     LOW_BAND:      Low Band selected: from 300 MHz to 348 MHz
+ *     VERY_LOW_BAND: Very low Band selected: from 150 MHz to 174 MHz
+ *
+ ******************************************************************************/
+
+enum spirit_bandselect_e
+  spirit_radio_get_band(FAR struct spirit_library_s *spirit)
+{
+  uint8_t regval;
+
+  /* Reads the SYNT0 register */
+
+  (void)spirit_reg_read(spirit, SYNT0_BASE, &regval, 1);
+
+  /* Mask the Band selected field */
+
+  if ((regval & 0x07) == SYNT0_BS_6)
+    {
+      return HIGH_BAND;
+    }
+  else if ((regval & 0x07) == SYNT0_BS_12)
+    {
+      return MIDDLE_BAND;
+    }
+  else if ((regval & 0x07) == SYNT0_BS_16)
+    {
+      return LOW_BAND;
+    }
+  else
+    {
+      return VERY_LOW_BAND;
+    }
+}
+
+/******************************************************************************
  * Name: spirit_radio_set_basefrequency
  *
  * Description:
@@ -514,6 +751,43 @@ int spirit_radio_set_basefrequency(FAR struct spirit_library_s *spirit,
 {
 #warning Missing logic
   return -ENOSYS;
+}
+
+/******************************************************************************
+ * Name: spirit_radio_get_basefrequency
+ *
+ * Description:
+ *   Returns the base carrier frequency.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   Base carrier frequency expressed in Hz as unsigned word.
+ *
+ ******************************************************************************/
+
+uint32_t spirit_radio_get_basefrequency(FAR struct spirit_library_s *spirit)
+{
+  enum spirit_bandselect_e band;
+  uint32_t synthword;
+  uint8_t refdiv;
+
+  /* Read the synth word */
+
+  synthword = spirit_radio_get_synthword(spirit);
+
+  /* Read the operating band */
+
+  band = spirit_radio_get_band(spirit);
+
+  refdiv = (uint8_t)spirit_radio_get_refdiv(spirit) + 1;
+
+  /* Calculates the frequency base and return it */
+
+  return (uint32_t) round(synthword * (((double)spirit->xtal_frequency) /
+                                       (FBASE_DIVIDER * refdiv *
+                                        g_vectc_bhalf[band])));
 }
 
 /******************************************************************************
@@ -758,6 +1032,82 @@ int spirit_radio_convert_chbandwidth(FAR struct spirit_library_s *spirit,
 }
 
 /******************************************************************************
+ * Name: spirit_radio_dbm2reg
+ *
+ * Description:
+ *   Returns the PA register value that corresponds to the passed dBm power.
+ *
+ *   NOTE: The power interpolation curves used by this function have been
+ *   extracted by measurements done on the divisional evaluation boards.
+ *
+ * Input Parameters:
+ *   spirit   - Reference to a Spirit library state structure instance
+ *   fbase    Frequency base expressed in Hz.
+ *   powerdbm Desired power in dBm.
+ *
+ * Returned Value:
+ *   Register value as byte.
+ *
+ ******************************************************************************/
+
+uint8_t spirit_radio_dbm2reg(FAR struct spirit_library_s *spirit,
+                             uint32_t fbase, float powerdbm)
+{
+  float pavalue;
+  uint8_t i = 0;
+  uint8_t j = 0;
+
+  if (IS_FREQUENCY_BAND_HIGH(fbase))
+    {
+      i = 0;
+      if (fbase < 900000000)
+        {
+          i = 1;  /* 868 */
+        }
+    }
+  else if (IS_FREQUENCY_BAND_MIDDLE(fbase))
+    {
+      i = 2;
+    }
+  else if (IS_FREQUENCY_BAND_LOW(fbase))
+    {
+      i = 3;
+    }
+  else if (IS_FREQUENCY_BAND_VERY_LOW(fbase))
+    {
+      i = 4;
+    }
+
+  j = 1;
+  if (powerdbm > 0 &&
+      13.0 / g_power_factors[i][2] - g_power_factors[i][3] /
+             g_power_factors[i][2] < powerdbm)
+    {
+      j = 0;
+    }
+  else if (powerdbm <= 0 &&
+           40.0 / g_power_factors[i][2] - g_power_factors[i][3] /
+                  g_power_factors[i][2] > powerdbm)
+    {
+      j = 2;
+    }
+
+  pavalue = g_power_factors[i][2 * j] * powerdbm +
+            g_power_factors[i][2 * j + 1];
+
+  if (pavalue < 1)
+    {
+      pavalue = 1;
+    }
+  else if (pavalue > 90)
+    {
+      pavalue = 90;
+    }
+
+  return (uint8_t)pavalue;
+}
+
+/******************************************************************************
  * Name: spirit_radio_set_palevel
  *
  * Description:
@@ -780,8 +1130,27 @@ int spirit_radio_convert_chbandwidth(FAR struct spirit_library_s *spirit,
 int spirit_radio_set_palevel(FAR struct spirit_library_s *spirit,
                              uint8_t ndx, float powerdbm)
 {
-#warning Missing logic
-  return -ENOSYS;
+  uint32_t basefrequency;
+  uint8_t address;
+  uint8_t level;
+
+  /* Check the parameters */
+
+  DEBUGASSERT(IS_PA_MAX_INDEX(ndx));
+  DEBUGASSERT(IS_PAPOWER_DBM(powerdbm));
+
+  /* Interpolate the power level */
+
+  basefrequency = spirit_radio_get_basefrequency(spirit);
+  level         = spirit_radio_dbm2reg(spirit, basefrequency, powerdbm);
+
+  /* Sets the base address */
+
+  address = PA_POWER8_BASE + 7 - ndx;
+
+  /* Configures the PA_LEVEL register */
+
+  return spirit_reg_write(spirit, address, &level, 1);
 }
 
 /******************************************************************************
@@ -803,8 +1172,29 @@ int spirit_radio_set_palevel(FAR struct spirit_library_s *spirit,
 int spirit_radio_set_palevel_maxindex(FAR struct spirit_library_s *spirit,
                                       uint8_t ndx)
 {
-#warning Missing logic
-  return -ENOSYS;
+  uint8_t regval;
+  int ret;
+
+  /* Check the parameters */
+
+  DEBUGASSERT(IS_PA_MAX_INDEX(ndx));
+
+  /* Reads the PA_POWER_0 register */
+
+  ret = spirit_reg_read(spirit, PA_POWER0_BASE, &regval, 1);
+  if (ret >= 0)
+    {
+      /* Mask the PA_LEVEL_MAX_INDEX[1:0] field and write the new value */
+
+      regval &= 0xf8;
+      regval |= ndx;
+
+      /* Configures the PA_POWER_0 register */
+
+      ret = spirit_reg_write(spirit, PA_POWER0_BASE, &regval, 1);
+    }
+
+  return ret;
 }
 
 /******************************************************************************
@@ -900,6 +1290,84 @@ int spirit_radio_persistentrx(FAR struct spirit_library_s *spirit,
     }
 
   return ret;
+}
+
+/******************************************************************************
+ * Name: spirit_radio_set_refdiv
+ *
+ * Description:
+ *   Enables or Disables the synthesizer reference divider.
+ *
+ * Input Parameters:
+ *   spirit   - Reference to a Spirit library state structure instance
+ *   newstate new state for synthesizer reference divider.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_radio_set_refdiv(FAR struct spirit_library_s *spirit,
+                            enum spirit_functional_state_e newstate)
+{
+  uint8_t regval;
+  int ret;
+
+  /* Check the parameters */
+
+  DEBUGASSERT(IS_SPIRIT_FUNCTIONAL_STATE(newstate));
+
+  /* Reads the SYNTH_CONFIG1_BASE and mask the REFDIV bit field */
+
+  ret = spirit_reg_read(spirit, SYNTH_CONFIG1_BASE, &regval, 1);
+  if (ret >= 0)
+    {
+      if (newstate == S_ENABLE)
+        {
+          regval |= 0x80;
+        }
+      else
+        {
+          regval &= 0x7f;
+        }
+
+      /* Writes the new value in the SYNTH_CONFIG1_BASE register */
+
+      ret = spirit_reg_write(spirit, SYNTH_CONFIG1_BASE, &regval, 1);
+    }
+
+  return ret;
+}
+
+/******************************************************************************
+ * Name: spirit_radio_get_refdiv
+ *
+ * Description:
+ *   Get the the synthesizer reference divider state.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   S_ENABLE or S_DISABLE.  Errors are not reported.
+ *
+ ******************************************************************************/
+
+enum spirit_functional_state_e
+  spirit_radio_get_refdiv(FAR struct spirit_library_s *spirit)
+{
+  uint8_t regval;
+
+  (void)spirit_reg_read(spirit, SYNTH_CONFIG1_BASE, &regval, 1);
+
+  if (((regval >> 7) & 0x1) != 0)
+    {
+      return S_ENABLE;
+    }
+  else
+    {
+      return S_DISABLE;
+    }
 }
 
 /******************************************************************************
