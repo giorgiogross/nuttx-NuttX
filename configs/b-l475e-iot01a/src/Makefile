@@ -48,7 +48,7 @@ CSRCS += stm32_userleds.c
 endif
 
 ifeq ($(CONFIG_IEEE802154_SPIRIT1),y)
-CSRCS += stm32_spirit1.c
+CSRCS += stm32_spirit.c
 endif
 
 include $(TOPDIR)/configs/Board.mk

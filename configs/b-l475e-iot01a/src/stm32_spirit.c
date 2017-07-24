@@ -1,5 +1,5 @@
 /****************************************************************************
- * configs/b-l475e-iot01a/src/stm32_spirit1.c
+ * configs/b-l475e-iot01a/src/stm32_spirit.c
  *
  *   Copyright (C) 2017 Gregory Nutt, All rights reserver
  *   Author: Gregory Nutt <gnutt@nuttx.org>
@@ -86,11 +86,11 @@ struct stm32l4_priv_s
  ****************************************************************************/
 
 /* IRQ/GPIO access callbacks.  These operations all hidden behind callbacks
- * to isolate the Spirit1 driver from differences in GPIO interrupt handling
+ * to isolate the Spirit driver from differences in GPIO interrupt handling
  * varying boards and MCUs.
  *
- *   stm32l4_reset      - Reset the Spirit1 part.
- *   stm32l4_attach_irq - Attach the Spirit1 interrupt handler to the GPIO
+ *   stm32l4_reset      - Reset the Spirit part.
+ *   stm32l4_attach_irq - Attach the Spirit interrupt handler to the GPIO
                           interrupt
  *   stm32l4_enable_irq - Enable or disable the GPIO interrupt
  */
@@ -100,15 +100,15 @@ static int  stm32l4_attach_irq(FAR const struct spirit1_lower_s *lower,
                              xcpt_t handler, FAR void *arg);
 static void stm32l4_enable_irq(FAR const struct spirit1_lower_s *lower,
                              bool state);
-static int  stm32l4_spirit1_devsetup(FAR struct stm32l4_priv_s *priv);
+static int  stm32l4_spirit_devsetup(FAR struct stm32l4_priv_s *priv);
 
 /****************************************************************************
  * Private Data
  ****************************************************************************/
 
-/* A reference to a structure of this type must be passed to the Spirit1
+/* A reference to a structure of this type must be passed to the Spirit
  * driver.  This structure provides information about the configuration
- * of the Spirit1 and provides some board-specific hooks.
+ * of the Spirit and provides some board-specific hooks.
  *
  * Memory for this structure is provided by the caller.  It is not copied
  * by the driver and is presumed to persist while the driver is active. The
@@ -116,7 +116,7 @@ static int  stm32l4_spirit1_devsetup(FAR struct stm32l4_priv_s *priv);
  * may modify frequency or X plate resistance values.
  */
 
-static struct stm32l4_priv_s g_spirit1 =
+static struct stm32l4_priv_s g_spirit =
 {
   .dev.reset   = stm32l4_reset,
   .dev.attach  = stm32l4_attach_irq,
@@ -132,7 +132,7 @@ static struct stm32l4_priv_s g_spirit1 =
  * Private Functions
  ****************************************************************************/
 
-/* Reset the Spirit1 1 part */
+/* Reset the Spirit 1 part */
 
 static int stm32l4_reset(FAR const struct spirit1_lower_s *lower)
 {
@@ -145,19 +145,19 @@ static int stm32l4_reset(FAR const struct spirit1_lower_s *lower)
   stm32l4_gpiowrite(priv->sdncfg, true);
   stm32l4_gpiowrite(priv->sdncfg, false);
 
-  /* Wait minimum 1.5 ms to allow SPIRIT1 a proper boot-up sequence */
+  /* Wait minimum 1.5 ms to allow Spirit a proper boot-up sequence */
 
   usleep(1500);
   return OK;
 }
 
 /* IRQ/GPIO access callbacks.  These operations all hidden behind
- * callbacks to isolate the Spirit1 driver from differences in GPIO
+ * callbacks to isolate the Spirit driver from differences in GPIO
  * interrupt handling by varying boards and MCUs.  If possible,
  * interrupts should be configured on both rising and falling edges
  * so that contact and loss-of-contact events can be detected.
  *
- *   stm32l4_attach_irq - Attach the Spirit1 interrupt handler to the GPIO
+ *   stm32l4_attach_irq - Attach the Spirit interrupt handler to the GPIO
  *                        interrupt
  *   stm32l4_enable_irq - Enable or disable the GPIO interrupt
  */
@@ -208,10 +208,10 @@ static void stm32l4_enable_irq(FAR const struct spirit1_lower_s *lower,
 }
 
 /****************************************************************************
- * Name: stm32l4_spirit1_devsetup
+ * Name: stm32l4_spirit_devsetup
  *
  * Description:
- *   Initialize one the Spirit1 device
+ *   Initialize one the Spirit device
  *
  * Returned Value:
  *   Zero is returned on success.  Otherwise, a negated errno value is
@@ -219,15 +219,13 @@ static void stm32l4_enable_irq(FAR const struct spirit1_lower_s *lower,
  *
  ****************************************************************************/
 
-static int stm32l4_spirit1_devsetup(FAR struct stm32l4_priv_s *priv)
+static int stm32l4_spirit_devsetup(FAR struct stm32l4_priv_s *priv)
 {
-  FAR struct ieee802154_radio_s *radio;
-  MACHANDLE mac;
   FAR struct spi_dev_s *spi;
   int ret;
 
   /* Configure the interrupt pin and SDN pins.  Innitializing the SDN to '1'
-   * powers down the Spirit1.
+   * powers down the Spirit.
    */
 
    stm32l4_configgpio(priv->intcfg);
@@ -242,52 +240,14 @@ static int stm32l4_spirit1_devsetup(FAR struct stm32l4_priv_s *priv)
       return -ENODEV;
     }
 
-  /* Initialize and register the SPI Spirit1 device */
+  /* Initialize and register the SPI Spirit device */
 
-  radio = spirit1_init(spi, &priv->dev);
-  if (radio == NULL)
-    {
-      wlerr("ERROR: Failed to initialize SPI bus %d\n", priv->spidev);
-      return -ENODEV;
-    }
-
-  /* Create a 802.15.4 MAC device from a 802.15.4 compatible radio device. */
-
-  mac = mac802154_create(radio);
-  if (mac == NULL)
-    {
-      wlerr("ERROR: Failed to initialize IEEE802.15.4 MAC\n");
-      return -ENODEV;
-    }
-
-#ifdef CONFIG_IEEE802154_NETDEV
-  /* Use the IEEE802.15.4 MAC interface instance to create a 6LoWPAN
-   * network interface by wrapping the MAC intrface instance in a
-   * network device driver via mac802154dev_register().
-   */
-
-  ret = mac802154netdev_register(mac);
+  ret = spirit_initialize(spi, &priv->dev);
   if (ret < 0)
     {
-      wlerr("ERROR: Failed to register the MAC network driver wpan%d: %d\n",
-            0, ret);
-      return ret;
+      wlerr("ERROR: spirit_initialize failed %d\n", priv->spidev);
+      return -ENODEV;
     }
-#endif
-
-#ifdef CONFIG_IEEE802154_MACDEV
-  /* If want to call these APIs from userspace, you have to wrap the MAC
-   * interface in a character device viamac802154dev_register().
-   */
-
-  ret = mac802154dev_register(mac, 0);
-  if (ret < 0)
-    {
-      wlerr("ERROR: Failed to register the MAC character driver /dev/ieee%d: %d\n",
-            0, ret);
-      return ret;
-    }
-#endif
 
   return OK;
 }
@@ -297,10 +257,10 @@ static int stm32l4_spirit1_devsetup(FAR struct stm32l4_priv_s *priv)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: stm32l4_spirit1_initialize
+ * Name: stm32l4_spirit_initialize
  *
  * Description:
- *   Initialize the Spirit1 device.
+ *   Initialize the Spirit device.
  *
  * Returned Value:
  *   Zero is returned on success.  Otherwise, a negated errno value is
@@ -308,16 +268,16 @@ static int stm32l4_spirit1_devsetup(FAR struct stm32l4_priv_s *priv)
  *
  ****************************************************************************/
 
-int stm32l4_spirit1_initialize(void)
+int stm32l4_spirit_initialize(void)
 {
   int ret;
 
-  wlinfo("Configuring Spirit1\n");
+  wlinfo("Configuring Spirit\n");
 
-  ret = stm32l4_spirit1_devsetup(&g_spirit1);
+  ret = stm32l4_spirit_devsetup(&g_spirit);
   if (ret < 0)
     {
-      wlerr("ERROR: Failed to initialize Spirit1: %d\n", ret);
+      wlerr("ERROR: Failed to initialize Spirit: %d\n", ret);
     }
 
   return OK;

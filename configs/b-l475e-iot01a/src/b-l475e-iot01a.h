@@ -56,7 +56,7 @@
  *
  * CONFIG_STM32L4_SPI3       - SPI3 support
  * CONFIG_WL_SPIRIT          - Spirit wireless library
- * CONFIG_IEEE802154_SPIRIT1 - Spirit1 IEEE 802.15.4 driver
+ * CONFIG_IEEE802154_SPIRIT1 - Spirit IEEE 802.15.4 driver
  * CONFIG_SCHED_HPWORK       - HP work queue support
  */
 
@@ -98,7 +98,7 @@
  *
  * NOTES:
  * - The Interrupt request is active low.
- * - When SDN =1 the SPIRIT1 is completely shut down and the contents of the
+ * - When SDN =1 the Spirit is completely shut down and the contents of the
  *   registers are lost.
  */
 
@@ -154,10 +154,10 @@ void weak_function stm32l4_spidev_initialize(void);
 #endif
 
 /****************************************************************************
- * Name: stm32l4_spirit1_initialize
+ * Name: stm32l4_spirit_initialize
  *
  * Description:
- *   Initialize the Spirit1 device.
+ *   Initialize the Spirit device.
  *
  * Returned Value:
  *   Zero is returned on success.  Otherwise, a negated errno value is
@@ -166,7 +166,7 @@ void weak_function stm32l4_spidev_initialize(void);
  ****************************************************************************/
 
 #ifdef HAVE_SPSGRF
-int stm32l4_spirit1_initialize(void);
+int stm32l4_spirit_initialize(void);
 #endif
 
 #endif /* __ASSEMBLY__ */

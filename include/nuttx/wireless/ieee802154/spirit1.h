@@ -78,29 +78,23 @@ extern "C"
 struct spi_dev_s; /* Forward reference */
 
 /****************************************************************************
- * Function: spirit1_init
+ * Function: spirit_initialize
  *
  * Description:
- *   Initialize the IEEE802.15.4 driver.  The spirit1 device is assumed to be
- *   in the post-reset state upon entry to this function.
+ *   Initialize the IEEE802.15.4 driver and register it as a networkd device.
  *
  * Parameters:
  *   spi   - A reference to the platform's SPI driver for the spirit1
  *   lower - The MCU-specific interrupt used to control low-level MCU
  *           functions (i.e., spirit1 GPIO interrupts).
- *   devno - If more than one spirit1 is supported, then this is the
- *           zero based number that identifies the spirit1;
  *
  * Returned Value:
  *   OK on success; Negated errno on failure.
  *
- * Assumptions:
- *
  ****************************************************************************/
 
-FAR struct ieee802154_radio_s *
-  spirit1_init(FAR struct spi_dev_s *spi,
-               FAR const struct spirit1_lower_s *lower);
+int spirit_initialize(FAR struct spi_dev_s *spi,
+                      FAR const struct spirit1_lower_s *lower);
 
 #undef EXTERN
 #ifdef __cplusplus
