@@ -54,10 +54,15 @@
 
 /* SPSGRF support depends on:
  *
- * CONFIG_STM32L4_SPI3  - SPI3 support
- * CONFIG_WL_SPIRIT     - Spirit wireless library
- * CONFIG_SPIRIT_NETDEV - Spirit IEEE 802.15.4 driver
- * CONFIG_SCHED_HPWORK  - HP work queue support
+ *   CONFIG_STM32L4_SPI3  - SPI3 support
+ *   CONFIG_WL_SPIRIT     - Spirit wireless library
+ *   CONFIG_SPIRIT_NETDEV - Spirit network driver
+ *   CONFIG_SCHED_HPWORK  - HP work queue support
+ *   CONFIG_SCHED_LPWORK  - LP work queue support
+ *   CONFIG_NET           - Networking enabled
+ *   CONFIG_NET_6LOWPAN   - 6LoWPAN stack enabled
+ *
+ * And probably a few other things.
  */
 
 #if !defined(CONFIG_STM32L4_SPI3)
