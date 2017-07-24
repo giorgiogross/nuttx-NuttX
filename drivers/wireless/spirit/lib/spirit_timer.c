@@ -1,13 +1,13 @@
 /******************************************************************************
- * drivers/wireless/spirit/spirit_management.c
- * The management layer for SPIRIT1 library.
+ * drivers/wireless/spirit/lib/spirit_timer.c
+ * Configuration and management of SPIRIT timers.
  *
- *  Copyright(c) 2015 STMicroelectronics
- *  Author: VMA division - AMS
- *  Version 3.2.2 08-July-2015
+ *   Copyright(c) 2015 STMicroelectronics
+ *   Author: VMA division - AMS
+ *   Version 3.2.2 08-July-2015
  *
- *  Adapted for NuttX by:
- *  Author:  Gregory Nutt <gnutt@nuttx.org>
+ *   Adapted for NuttX by:
+ *   Author:  Gregory Nutt <gnutt@nuttx.org>
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -38,15 +38,19 @@
  * Included Files
  ******************************************************************************/
 
-#include "spirit_management.h"
+#include <assert.h>
+
+#include "spirit_timer.h"
+#include "spirit_radio.h"
+#include "spirit_spi.h"
 
 /******************************************************************************
  * Pre-processor Definitions
  ******************************************************************************/
 
-#define COMMUNICATION_STATE_TX          0
-#define COMMUNICATION_STATE_RX          1
-#define COMMUNICATION_STATE_NONE        2
+/* Returns the absolute value. */
+
+#define S_ABS(a) ((a) > 0 ? (a) : -(a))
 
 /******************************************************************************
  * Private Functions
@@ -68,22 +72,70 @@
  ******************************************************************************/
 
 /******************************************************************************
- * Name: spirit_management_initcommstate
+ * Name: spirit_timer_set_rxtimeout
  *
  * Description:
- *   Initialize communication state
+ *   Sets the RX timeout timer counter.  If 'counter' is equal to 0 the
+ *   timeout is disabled.
  *
  * Input Parameters:
- *   spirit    - Reference to a Spirit library state structure instance
- *   frequency - Desired communication frequency
+ *   spirit  - Reference to a Spirit library state structure instance
+ *   counter - value for the timer counter.
  *
  * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
  *
  ******************************************************************************/
 
-void spirit_management_initcommstate(FAR struct spirit_library_s *spirit,
-                                     uint32_t frequency)
+int spirit_timer_set_rxtimeout(FAR struct spirit_library_s *spirit,
+                               uint8_t counter)
 {
-  spirit->commstate     = COMMUNICATION_STATE_NONE;
-  spirit->commfrequency = frequency;
+  /* Writes the counter value for RX timeout in the corresponding register */
+
+  return spirit_reg_write(spirit, TIMERS4_RX_TIMEOUT_COUNTER_BASE, &counter, 1);
+}
+
+/******************************************************************************
+ * Name: spirit_timer_set_rxtimeout_stopcondition
+ *
+ * Description:
+ *   Sets the RX timeout stop conditions.
+ *
+ * Input Parameters:
+ *   spirit        - Reference to a Spirit library state structure instance
+ *   stopcondition - New stop condition.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_timer_set_rxtimeout_stopcondition(FAR struct spirit_library_s *spirit,
+                                             enum spirit_rxtimeout_stopcondition_e
+                                             stopcondition)
+{
+  uint8_t regval[2];
+  int ret;
+
+  /* Check the parameters */
+
+  DEBUGASSERT(IS_RX_TIMEOUT_STOP_CONDITION(stopcondition));
+
+  /* Reads value on the PKT_FLT_OPTIONS and PROTOCOL2 register */
+
+  ret = spirit_reg_read(spirit, PCKT_FLT_OPTIONS_BASE, regval, 2);
+  if (ret >= 0)
+    {
+      regval[0] &= 0xbf;
+      regval[0] |= ((stopcondition & 0x08) << 3);
+
+      regval[1] &= 0x1f;
+      regval[1] |= (stopcondition << 5);
+
+      /* Write value to the PKT_FLT_OPTIONS and PROTOCOL2 register */
+
+      ret = spirit_reg_write(spirit, PCKT_FLT_OPTIONS_BASE, regval, 2);
+    }
+
+  return ret;
 }

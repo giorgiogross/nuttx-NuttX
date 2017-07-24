@@ -1,6 +1,6 @@
 /******************************************************************************
- * drivers/wireless/spirit/spirit_gpio.c
- * This file provides all the low level API to manage SPIRIT GPIO.
+ * drivers/wireless/spirit/lib/spirit_management.c
+ * The management layer for SPIRIT1 library.
  *
  *  Copyright(c) 2015 STMicroelectronics
  *  Author: VMA division - AMS
@@ -38,15 +38,15 @@
  * Included Files
  ******************************************************************************/
 
-#include <stdint.h>
-#include <assert.h>
-
-#include "spirit_gpio.h"
-#include "spirit_spi.h"
+#include "spirit_management.h"
 
 /******************************************************************************
  * Pre-processor Definitions
  ******************************************************************************/
+
+#define COMMUNICATION_STATE_TX          0
+#define COMMUNICATION_STATE_RX          1
+#define COMMUNICATION_STATE_NONE        2
 
 /******************************************************************************
  * Private Functions
@@ -68,34 +68,22 @@
  ******************************************************************************/
 
 /******************************************************************************
- * Name:
+ * Name: spirit_management_initcommstate
  *
  * Description:
- *   Initializes the Spirit GPIOx according to the specified parameters in
- *   the gpioinit parameter.
+ *   Initialize communication state
  *
  * Input Parameters:
- *   spirit   - Reference to a Spirit library state structure instance
- *   gpioinit - A pointer to a struct spirit_gpio_init_s structure that
- *              contains the configuration information for the specified
- *              SPIRIT GPIO.
+ *   spirit    - Reference to a Spirit library state structure instance
+ *   frequency - Desired communication frequency
  *
  * Returned Value:
- *   Zero (OK) on success; a negated errno value on failure.
  *
  ******************************************************************************/
 
-int spirit_gpio_initialize(FAR struct spirit_library_s *spirit,
-                           FAR const struct spirit_gpio_init_s *gpioinit)
+void spirit_management_initcommstate(FAR struct spirit_library_s *spirit,
+                                     uint32_t frequency)
 {
-  uint8_t regval = 0x00;
-
-  /* Check the parameters */
-
-  DEBUGASSERT(IS_SPIRIT_GPIO(gpioinit->gpiopin));
-  DEBUGASSERT(IS_SPIRIT_GPIO_MODE(gpioinit->gpiomode));
-  DEBUGASSERT(IS_SPIRIT_GPIO_IO(gpioinit->gpioio));
-
-  regval = ((uint8_t)(gpioinit->gpiomode) | (uint8_t)(gpioinit->gpioio));
-  return spirit_reg_write(spirit, gpioinit->gpiopin, &regval, 1);
+  spirit->commstate     = COMMUNICATION_STATE_NONE;
+  spirit->commfrequency = frequency;
 }

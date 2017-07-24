@@ -1,5 +1,5 @@
 /****************************************************************************
- * drivers/wireless/ieee802154/spirit1/spirit1.c
+ * drivers/wireless/spirit/drivers/spirit_netdev.c
  *
  *   Copyright (C) 2017 Gregory Nutt. All rights reserved.
  *   Author:  Gregory Nutt <gnutt@nuttx.org>
@@ -59,7 +59,7 @@
 #include <nuttx/net/netdev.h>
 #include <nuttx/net/sixlowpan.h>
 
-#include <nuttx/wireless/ieee802154/spirit1.h>
+#include <nuttx/wireless/spirit.h>
 #include <nuttx/wireless/ieee802154/ieee802154_radio.h>
 
 #include "spirit_types.h"
@@ -89,12 +89,8 @@
 #  error CONFIG_SPI_EXCHANGE required for this driver
 #endif
 
-#ifndef CONFIG_IEEE802154_spirit1_SPIMODE
-#  define CONFIG_IEEE802154_spirit1_SPIMODE SPIDEV_MODE0
-#endif
-
-#ifndef CONFIG_IEEE802154_spirit1_FREQUENCY
-#  define CONFIG_IEEE802154_spirit1_FREQUENCY 1000000
+#if !defined(CONFIG_NET) || !defined(CONFIG_NET_6LOWPAN)
+#  error 6LoWPAN network support is required.
 #endif
 
 /* TX poll delay = 1 seconds. CLK_TCK is the number of clock ticks per second */
@@ -1161,10 +1157,10 @@ int spirit_hw_initialize(FAR struct spirit_driver_s *priv,
  ****************************************************************************/
 
 /****************************************************************************
- * Function: spirit_initialize
+ * Function: spirit_netdev_initialize
  *
  * Description:
- *   Initialize the IEEE802.15.4 driver and register it as a networkd device.
+ *   Initialize the IEEE802.15.4 driver and register it as a network device.
  *
  * Parameters:
  *   spi   - A reference to the platform's SPI driver for the spirit1
@@ -1177,8 +1173,8 @@ int spirit_hw_initialize(FAR struct spirit_driver_s *priv,
  ****************************************************************************/
 
 
-int spirit_initialize(FAR struct spi_dev_s *spi,
-                      FAR const struct spirit1_lower_s *lower)
+int spirit_netdev_initialize(FAR struct spi_dev_s *spi,
+                             FAR const struct spirit1_lower_s *lower)
 {
   FAR struct spirit_driver_s *priv;
   FAR struct ieee802154_driver_s *ieee;

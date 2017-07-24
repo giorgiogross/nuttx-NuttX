@@ -1,5 +1,5 @@
 ############################################################################
-# drivers/ieee802154/spirit1/Make.defs
+# drivers/wireless/spirit/lib//Make.defs
 #
 #   Copyright (C) 2017 Gregory Nutt. All rights reserved.
 #   Author: Gregory Nutt <gnutt@nuttx.org>
@@ -30,20 +30,15 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-#
+#-
 ############################################################################
 
-# Include Spirit1 drivers into the build
+# Include Spirit driver source files in the build
 
-ifeq ($(CONFIG_IEEE802154_SPIRIT1),y)
+CSRCS += spirit_radio.c spirit_pktbasic.c spirit_qi.c spirit_management.c
+CSRCS += spirit_irq.c spirit_timer.c spirit_gpio.c spirit_spi.c
 
-CSRCS += spirit1.c
+# Include Spirit driver build support
 
-# Include Spirit1 build support
-
-DEPPATH += --dep-path wireless$(DELIM)ieee802154$(DELIM)spirit1
-VPATH += :wireless$(DELIM)ieee802154$(DELIM)spirit1
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" \
-  $(TOPDIR)$(DELIM)drivers$(DELIM)wireless$(DELIM)ieee802154$(DELIM)spirit1}
-
-endif # CONFIG_IEEE802154_SPIRIT1
+DEPPATH += --dep-path wireless$(DELIM)spirit$(DELIM)lib
+VPATH += :wireless$(DELIM)spirit$(DELIM)lib

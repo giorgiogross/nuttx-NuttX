@@ -1,5 +1,5 @@
 /******************************************************************************
- * drivers/wireless/spirit/spirit_pktbasic.c
+ * drivers/wireless/spirit/lib/spirit_pktbasic.c
  * Configuration and management of SPIRIT Basic packets.
  *
  *   Copyright(c) 2015 STMicroelectronics

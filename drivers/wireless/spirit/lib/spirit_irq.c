@@ -1,5 +1,5 @@
 /******************************************************************************
- * drivers/wireless/spirit/spirit_irq.c
+ * drivers/wireless/spirit/lib/spirit_irq.c
  * Configuration and management of SPIRIT IRQs.
  *
  *   Copyright(c) 2015 STMicroelectronics

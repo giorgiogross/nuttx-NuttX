@@ -1,5 +1,5 @@
 /******************************************************************************
- * drivers/wireless/spirit/spirit_qi.c
+ * drivers/wireless/spirit/lib/spirit_qi.c
  * Configuration and management of SPIRIT QI.
  *
  *   Copyright(c) 2015 STMicroelectronics

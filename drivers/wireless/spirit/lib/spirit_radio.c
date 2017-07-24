@@ -1,5 +1,5 @@
 /******************************************************************************
- * drivers/wireless/spirit/spirit_radio.c
+ * drivers/wireless/spirit/lib/spirit_radio.c
  * This file provides all the low level API to manage Analog and Digital radio
  * part of SPIRIT.
  *

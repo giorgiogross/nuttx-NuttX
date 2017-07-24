@@ -1,5 +1,5 @@
 /******************************************************************************
- * drivers/wireless/spirit/src/spirit_spi.c
+ * drivers/wireless/spirit/lib//spirit_spi.c
  * NuttX SPIRIT SPI driver interface.
  *
  *   Copyright (C) 2017 Gregory Nutt. All rights reserved.

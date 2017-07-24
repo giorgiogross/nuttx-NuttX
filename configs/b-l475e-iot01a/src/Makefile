@@ -47,7 +47,7 @@ else
 CSRCS += stm32_userleds.c
 endif
 
-ifeq ($(CONFIG_IEEE802154_SPIRIT1),y)
+ifeq ($(CONFIG_SPIRIT_NETDEV),y)
 CSRCS += stm32_spirit.c
 endif
 

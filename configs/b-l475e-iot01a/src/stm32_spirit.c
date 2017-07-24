@@ -48,8 +48,8 @@
 
 #include <nuttx/arch.h>
 #include <nuttx/fs/fs.h>
+#include <nuttx/wireless/spirit.h>
 #include <nuttx/wireless/ieee802154/ieee802154_mac.h>
-#include <nuttx/wireless/ieee802154/spirit1.h>
 
 #include "stm32l4_gpio.h"
 #include "stm32l4_exti.h"
@@ -73,7 +73,7 @@
 
 struct stm32l4_priv_s
 {
-  struct spirit1_lower_s dev;
+  struct spirit_lower_s dev;
   xcpt_t handler;
   FAR void *arg;
   uint32_t intcfg;
@@ -95,10 +95,10 @@ struct stm32l4_priv_s
  *   stm32l4_enable_irq - Enable or disable the GPIO interrupt
  */
 
-static int  stm32l4_reset(FAR const struct spirit1_lower_s *lower);
-static int  stm32l4_attach_irq(FAR const struct spirit1_lower_s *lower,
+static int  stm32l4_reset(FAR const struct spirit_lower_s *lower);
+static int  stm32l4_attach_irq(FAR const struct spirit_lower_s *lower,
                              xcpt_t handler, FAR void *arg);
-static void stm32l4_enable_irq(FAR const struct spirit1_lower_s *lower,
+static void stm32l4_enable_irq(FAR const struct spirit_lower_s *lower,
                              bool state);
 static int  stm32l4_spirit_devsetup(FAR struct stm32l4_priv_s *priv);
 
@@ -134,7 +134,7 @@ static struct stm32l4_priv_s g_spirit =
 
 /* Reset the Spirit 1 part */
 
-static int stm32l4_reset(FAR const struct spirit1_lower_s *lower)
+static int stm32l4_reset(FAR const struct spirit_lower_s *lower)
 {
   FAR struct stm32l4_priv_s *priv = (FAR struct stm32l4_priv_s *)lower;
 
@@ -162,7 +162,7 @@ static int stm32l4_reset(FAR const struct spirit1_lower_s *lower)
  *   stm32l4_enable_irq - Enable or disable the GPIO interrupt
  */
 
-static int stm32l4_attach_irq(FAR const struct spirit1_lower_s *lower,
+static int stm32l4_attach_irq(FAR const struct spirit_lower_s *lower,
                             xcpt_t handler, FAR void *arg)
 {
   FAR struct stm32l4_priv_s *priv = (FAR struct stm32l4_priv_s *)lower;
@@ -176,7 +176,7 @@ static int stm32l4_attach_irq(FAR const struct spirit1_lower_s *lower,
   return OK;
 }
 
-static void stm32l4_enable_irq(FAR const struct spirit1_lower_s *lower,
+static void stm32l4_enable_irq(FAR const struct spirit_lower_s *lower,
                                bool state)
 {
   FAR struct stm32l4_priv_s *priv = (FAR struct stm32l4_priv_s *)lower;
@@ -242,10 +242,10 @@ static int stm32l4_spirit_devsetup(FAR struct stm32l4_priv_s *priv)
 
   /* Initialize and register the SPI Spirit device */
 
-  ret = spirit_initialize(spi, &priv->dev);
+  ret = spirit_netdev_initialize(spi, &priv->dev);
   if (ret < 0)
     {
-      wlerr("ERROR: spirit_initialize failed %d\n", priv->spidev);
+      wlerr("ERROR: spirit_netdev_initialize failed %d\n", priv->spidev);
       return -ENODEV;
     }
 

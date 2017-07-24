@@ -1,5 +1,5 @@
 /****************************************************************************
- * include/nuttx/ieee802154/spirit1.h
+ * include/nuttx/wireless/spirit.h
  *
  *   Copyright (C) 2017 Gregory Nutt. All rights reserved.
  *   Author:  Gregory Nutt <gnutt@nuttx.org>
@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __INCLUDE_NUTTX_IEEE802154_SPIRIT1_H
-#define __INCLUDE_NUTTX_IEEE802154_SPIRIT1_H
+#ifndef __INCLUDE_NUTTX_WIRELESS_SPIRIT_H
+#define __INCLUDE_NUTTX_WIRELESS_SPIRIT_H
 
 /****************************************************************************
  * Included Files
@@ -50,17 +50,17 @@
  * Public Types
  ****************************************************************************/
 
-/* The spirit1 provides interrupts to the MCU via a GPIO pin.  The
+/* The Spirit provides interrupts to the MCU via a GPIO pin.  The
  * following structure provides an MCU-independent mechanixm for controlling
- * the spirit1 GPIO interrupt.
+ * the Spirit GPIO interrupt.
  */
 
-struct spirit1_lower_s
+struct spirit_lower_s
 {
-  int  (*reset)(FAR const struct spirit1_lower_s *lower);
-  int  (*attach)(FAR const struct spirit1_lower_s *lower, xcpt_t handler,
+  int  (*reset)(FAR const struct spirit_lower_s *lower);
+  int  (*attach)(FAR const struct spirit_lower_s *lower, xcpt_t handler,
                  FAR void *arg);
-  void (*enable)(FAR const struct spirit1_lower_s *lower, bool state);
+  void (*enable)(FAR const struct spirit_lower_s *lower, bool state);
 };
 
 #ifdef __cplusplus
@@ -78,23 +78,23 @@ extern "C"
 struct spi_dev_s; /* Forward reference */
 
 /****************************************************************************
- * Function: spirit_initialize
+ * Function: spirit_netdev_initialize
  *
  * Description:
- *   Initialize the IEEE802.15.4 driver and register it as a networkd device.
+ *   Initialize the IEEE802.15.4 driver and register it as a network device.
  *
  * Parameters:
- *   spi   - A reference to the platform's SPI driver for the spirit1
+ *   spi   - A reference to the platform's SPI driver for the spirit
  *   lower - The MCU-specific interrupt used to control low-level MCU
- *           functions (i.e., spirit1 GPIO interrupts).
+ *           functions (i.e., spirit GPIO interrupts).
  *
  * Returned Value:
  *   OK on success; Negated errno on failure.
  *
  ****************************************************************************/
 
-int spirit_initialize(FAR struct spi_dev_s *spi,
-                      FAR const struct spirit1_lower_s *lower);
+int spirit_netdev_initialize(FAR struct spi_dev_s *spi,
+                             FAR const struct spirit_lower_s *lower);
 
 #undef EXTERN
 #ifdef __cplusplus

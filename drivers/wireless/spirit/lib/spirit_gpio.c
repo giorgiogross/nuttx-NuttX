@@ -1,13 +1,13 @@
 /******************************************************************************
- * drivers/wireless/spirit/spirit_timer.c
- * Configuration and management of SPIRIT timers.
+ * drivers/wireless/spirit/lib/spirit_gpio.c
+ * This file provides all the low level API to manage SPIRIT GPIO.
  *
- *   Copyright(c) 2015 STMicroelectronics
- *   Author: VMA division - AMS
- *   Version 3.2.2 08-July-2015
+ *  Copyright(c) 2015 STMicroelectronics
+ *  Author: VMA division - AMS
+ *  Version 3.2.2 08-July-2015
  *
- *   Adapted for NuttX by:
- *   Author:  Gregory Nutt <gnutt@nuttx.org>
+ *  Adapted for NuttX by:
+ *  Author:  Gregory Nutt <gnutt@nuttx.org>
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -38,19 +38,15 @@
  * Included Files
  ******************************************************************************/
 
+#include <stdint.h>
 #include <assert.h>
 
-#include "spirit_timer.h"
-#include "spirit_radio.h"
+#include "spirit_gpio.h"
 #include "spirit_spi.h"
 
 /******************************************************************************
  * Pre-processor Definitions
  ******************************************************************************/
-
-/* Returns the absolute value. */
-
-#define S_ABS(a) ((a) > 0 ? (a) : -(a))
 
 /******************************************************************************
  * Private Functions
@@ -72,70 +68,34 @@
  ******************************************************************************/
 
 /******************************************************************************
- * Name: spirit_timer_set_rxtimeout
+ * Name:
  *
  * Description:
- *   Sets the RX timeout timer counter.  If 'counter' is equal to 0 the
- *   timeout is disabled.
+ *   Initializes the Spirit GPIOx according to the specified parameters in
+ *   the gpioinit parameter.
  *
  * Input Parameters:
- *   spirit  - Reference to a Spirit library state structure instance
- *   counter - value for the timer counter.
+ *   spirit   - Reference to a Spirit library state structure instance
+ *   gpioinit - A pointer to a struct spirit_gpio_init_s structure that
+ *              contains the configuration information for the specified
+ *              SPIRIT GPIO.
  *
  * Returned Value:
  *   Zero (OK) on success; a negated errno value on failure.
  *
  ******************************************************************************/
 
-int spirit_timer_set_rxtimeout(FAR struct spirit_library_s *spirit,
-                               uint8_t counter)
+int spirit_gpio_initialize(FAR struct spirit_library_s *spirit,
+                           FAR const struct spirit_gpio_init_s *gpioinit)
 {
-  /* Writes the counter value for RX timeout in the corresponding register */
-
-  return spirit_reg_write(spirit, TIMERS4_RX_TIMEOUT_COUNTER_BASE, &counter, 1);
-}
-
-/******************************************************************************
- * Name: spirit_timer_set_rxtimeout_stopcondition
- *
- * Description:
- *   Sets the RX timeout stop conditions.
- *
- * Input Parameters:
- *   spirit        - Reference to a Spirit library state structure instance
- *   stopcondition - New stop condition.
- *
- * Returned Value:
- *   Zero (OK) on success; a negated errno value on failure.
- *
- ******************************************************************************/
-
-int spirit_timer_set_rxtimeout_stopcondition(FAR struct spirit_library_s *spirit,
-                                             enum spirit_rxtimeout_stopcondition_e
-                                             stopcondition)
-{
-  uint8_t regval[2];
-  int ret;
+  uint8_t regval = 0x00;
 
   /* Check the parameters */
 
-  DEBUGASSERT(IS_RX_TIMEOUT_STOP_CONDITION(stopcondition));
+  DEBUGASSERT(IS_SPIRIT_GPIO(gpioinit->gpiopin));
+  DEBUGASSERT(IS_SPIRIT_GPIO_MODE(gpioinit->gpiomode));
+  DEBUGASSERT(IS_SPIRIT_GPIO_IO(gpioinit->gpioio));
 
-  /* Reads value on the PKT_FLT_OPTIONS and PROTOCOL2 register */
-
-  ret = spirit_reg_read(spirit, PCKT_FLT_OPTIONS_BASE, regval, 2);
-  if (ret >= 0)
-    {
-      regval[0] &= 0xbf;
-      regval[0] |= ((stopcondition & 0x08) << 3);
-
-      regval[1] &= 0x1f;
-      regval[1] |= (stopcondition << 5);
-
-      /* Write value to the PKT_FLT_OPTIONS and PROTOCOL2 register */
-
-      ret = spirit_reg_write(spirit, PCKT_FLT_OPTIONS_BASE, regval, 2);
-    }
-
-  return ret;
+  regval = ((uint8_t)(gpioinit->gpiomode) | (uint8_t)(gpioinit->gpioio));
+  return spirit_reg_write(spirit, gpioinit->gpiopin, &regval, 1);
 }

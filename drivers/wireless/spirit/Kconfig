@@ -21,3 +21,6 @@ config WL_SPIRIT_SPIFREQUENCY
 		reduce this for your board.
 
 endif
+
+source drivers/wireless/spirit/drivers/Kconfig
+

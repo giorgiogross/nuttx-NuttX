@@ -43,7 +43,6 @@ ifeq ($(CONFIG_DRIVERS_IEEE802154),y)
 
 include wireless$(DELIM)ieee802154$(DELIM)mrf24j40$(DELIM)Make.defs
 include wireless$(DELIM)ieee802154$(DELIM)at86rf23x$(DELIM)Make.defs
-include wireless$(DELIM)ieee802154$(DELIM)spirit1$(DELIM)Make.defs
 
 # Include common IEEE 802.15.4 build support
 
