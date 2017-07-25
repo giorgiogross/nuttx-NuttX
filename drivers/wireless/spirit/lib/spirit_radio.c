@@ -1114,10 +1114,7 @@ int spirit_radio_set_basefrequency(FAR struct spirit_library_s *spirit,
 
   if (spirit->vcocalib == S_ENABLE)
     {
-#warning Missing logic
-#if 0
       return spirit_managment_wavco_calibration(spirit);
-#endif
     }
 
   return ret;

@@ -54,10 +54,26 @@
  * Public Types
  ******************************************************************************/
 
-
 /******************************************************************************
  * Public Function Prototypes
  ******************************************************************************/
+
+/******************************************************************************
+ * Name: spirit_managment_wavco_calibration
+ *
+ * Description:
+ *   Perform VCO calbration WA.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   Zero (OK) is returned on success; A negated errno value is returned on
+ *   any failure.
+ *
+ ******************************************************************************/
+
+uint8_t spirit_managment_wavco_calibration(FAR struct spirit_library_s *spirit);
 
 /******************************************************************************
  * Name: spirit_management_initcommstate

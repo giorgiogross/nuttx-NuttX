@@ -107,6 +107,90 @@ int spirit_calib_enable_vco(FAR struct spirit_library_s *spirit,
                             enum spirit_functional_state_e newstate);
 
 /******************************************************************************
+ * Name: spirit_calib_get_vcocal
+ *
+ * Description:
+ *   Returns the VCO calibration data from internal VCO calibrator.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   VCO calibration data byte.
+ *
+ ******************************************************************************/
+
+uint8_t spirit_calib_get_vcocal(FAR struct spirit_library_s *spirit);
+
+/******************************************************************************
+ * Name: spirit_calib_set_vcotxcal
+ *
+ * Description:
+ *   Sets the VCO calibration data to be used in TX mode.
+ *
+ * Input Parameters:
+ *   spirit  - Reference to a Spirit library state structure instance
+ *   caldata - Calibration data word to be set.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on any failure.
+ *
+ ******************************************************************************/
+
+int spirit_calib_set_vcotxcal(FAR struct spirit_library_s *spirit,
+                               uint8_t caldata);
+
+/******************************************************************************
+ * Name: spirit_calib_get_vcotxcal
+ *
+ * Description:
+ *   Returns the actual VCO calibration data used in TX mode.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   VCO calibration data used in TX mode
+ *
+ ******************************************************************************/
+
+uint8_t spirit_calib_get_vcotxcal(FAR struct spirit_library_s *spirit);
+
+/******************************************************************************
+ * Name: spirit_calib_set_vcorxcal
+ *
+ * Description:
+ *   Sets the VCO calibration data to be used in RX mode.
+ *
+ * Input Parameters:
+ *   spirit  - Reference to a Spirit library state structure instance
+ *   caldata - Calibration data word to be set.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on any failure.
+ *
+ ******************************************************************************/
+
+int spirit_calib_set_vcorxcal(FAR struct spirit_library_s *spirit,
+                              uint8_t caldata);
+
+/******************************************************************************
+ * Name: spirit_calib_get_vcorxcal
+ *
+ * Description:
+ *   Returns the actual VCO calibration data used in RX mode.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   Calibration data word used in RX mode.
+ *
+ ******************************************************************************/
+
+uint8_t spirit_calib_get_vcorxcal(FAR struct spirit_library_s *spirit);
+
+/******************************************************************************
  * Name: spirit_calib_select_vco
  *
  * Description:

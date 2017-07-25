@@ -977,6 +977,10 @@ int spirit_hw_initialize(FAR struct spirit_driver_s *priv,
 
   priv->ifup = false;
 
+  /* Perform VCO calibration WA when the radio is initialized */
+
+  spirit_radio_enable_wavco_calibration(spirit, S_ENABLE);
+
   /* Configure the Spirit1 radio part */
 
   ret = spirit_radio_initialize(spirit, &g_radio_init);
