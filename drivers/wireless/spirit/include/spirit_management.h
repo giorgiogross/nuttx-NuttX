@@ -45,16 +45,6 @@
 #include "spirit_types.h"
 
 /******************************************************************************
- * Pre-processor Definitions
- ******************************************************************************/
-
-/* Macros used in assertions */
-
-/******************************************************************************
- * Public Types
- ******************************************************************************/
-
-/******************************************************************************
  * Public Function Prototypes
  ******************************************************************************/
 
@@ -106,6 +96,22 @@ int spirit_management_txstrobe(FAR struct spirit_library_s *spirit);
  ******************************************************************************/
 
 int spirit_management_rxstrobe(FAR struct spirit_library_s *spirit);
+
+/******************************************************************************
+ * Name: spirit_management_waextracurrent
+ *
+ * Description:
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   Zero (OK) is returned on success; A negated errno value is returned on
+ *   any failure.
+ *
+ ******************************************************************************/
+
+int spirit_management_waextracurrent(FAR struct spirit_library_s *spirit);
 
 /******************************************************************************
  * Name: spirit_management_initcommstate
