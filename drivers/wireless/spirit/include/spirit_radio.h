@@ -219,7 +219,7 @@
 #define IS_CLK_REC_P_GAIN(gain)     ((gain) <= 7)
 #define IS_CLK_REC_I_GAIN(gain)     ((gain) <= 15)
 
-/* Other acros used in assertions */
+/* Other macros used in assertions */
 
 #define IS_XTAL_FLAG(flag) \
   (((flag) == XTAL_FLAG_24_MHz) || ((flag) == XTAL_FLAG_26_MHz))
@@ -230,6 +230,9 @@
   (((mod)  == FSK)              || ((mod)  == GFSK_BT05)        || \
    ((mod)  == GFSK_BT1)         || ((mod)  == ASK_OOK)          || \
    ((mod)  == MSK))
+#define IS_PA_LOAD_CAP(cwc) \
+  (((cwc) == LOAD_0_PF)         || ((cwc) == LOAD_1_2_PF)       || \
+   ((cwc) == LOAD_2_4_PF)       || ((cwc) == LOAD_3_6_PF))
 
 /******************************************************************************
  * Public Types
@@ -263,6 +266,16 @@ enum modulation_select_e
   ASK_OOK          = 0x20,  /* ASK or OOK modulation selected. ASK will
                              * use power ramping */
   MSK              = 0x30   /* MSK modulation selected */
+};
+
+/* SPIRIT PA additional load capacitors bank enumeration */
+
+enum spirit_paload_capacitor_e
+{
+  LOAD_0_PF        = PA_POWER0_CWC_0,    /* No additional PA load capacitor */
+  LOAD_1_2_PF      = PA_POWER0_CWC_1_2P, /* 1.2pF additional PA load capacitor */
+  LOAD_2_4_PF      = PA_POWER0_CWC_2_4P, /* 2.4pF additional PA load capacitor */
+  LOAD_3_6_PF      = PA_POWER0_CWC_3_6P  /* 3.6pF additional PA load capacitor */
 };
 
 /* SPIRIT Radio initialization structure definition */
@@ -724,6 +737,50 @@ uint8_t spirit_radio_dbm2reg(FAR struct spirit_library_s *spirit,
 
 int spirit_radio_set_palevel(FAR struct spirit_library_s *spirit,
                              uint8_t ndx, float powerdbm);
+
+/******************************************************************************
+ * Name: spirit_radio_set_outputload
+ *
+ * Description:
+ *   Sets the output stage additional load capacitor bank.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *   load one of the possible value of the enum type enum spirit_paload_capacitor_e.
+ *         LOAD_0_PF    No additional PA load capacitor
+ *         LOAD_1_2_PF  1.2pF additional PA load capacitor
+ *         LOAD_2_4_PF  2.4pF additional PA load capacitor
+ *         LOAD_3_6_PF  3.6pF additional PA load capacitor
+ *
+ * Returned Value:
+ *   Zero (OK) on success.  A negated errno value is returned on any failure.
+ *
+ ******************************************************************************/
+
+int spirit_radio_set_outputload(FAR struct spirit_library_s *spirit,
+                                enum spirit_paload_capacitor_e load);
+
+/******************************************************************************
+ * Name: spirit_radio_get_outputload
+ *
+ * Description:
+ *   Returns the output stage additional load capacitor bank.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   Output stage additional load capacitor bank.  This value may be:
+ *
+ *     LOAD_0_PF    No additional PA load capacitor
+ *     LOAD_1_2_PF  1.2pF additional PA load capacitor
+ *     LOAD_2_4_PF  2.4pF additional PA load capacitor
+ *     LOAD_3_6_PF  3.6pF additional PA load capacitor
+ *
+ ******************************************************************************/
+
+enum spirit_paload_capacitor_e
+  spirit_radio_get_outputload(FAR struct spirit_library_s *spirit);
 
 /******************************************************************************
  * Name: spirit_radio_set_palevel_maxindex

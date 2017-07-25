@@ -65,6 +65,9 @@
 
 /* Macros used in assertions */
 
+#define IS_PKT_LENGTH_WIDTH_BITS(bits)                ((bits) <= 16)
+#define IS_PKT_SEQ_NUMBER_RELOAD(seqn)                ((seqn) <= 3)
+
 #define IS_PKT_PREAMBLE_LENGTH(len) \
   ((len == PKT_PREAMBLE_LENGTH_01BYTE)  || (len == PKT_PREAMBLE_LENGTH_02BYTES)  || \
    (len == PKT_PREAMBLE_LENGTH_03BYTES) || (len == PKT_PREAMBLE_LENGTH_04BYTES)  || \
@@ -188,15 +191,57 @@ enum pkt_ctrllen_e
  ******************************************************************************/
 
 /******************************************************************************
- * Name:
+ * Name: spirit_pktcommon_set_controllen
  *
  * Description:
+ *   Sets the CONTROL field length for SPIRIT packets.
  *
  * Input Parameters:
+ *   spirit  - Reference to a Spirit library state structure instance
+ *   ctrllen - Length of CONTROL field in bytes.
  *
  * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
  *
  ******************************************************************************/
+
+int spirit_pktcommon_set_controllen(FAR struct spirit_library_s *spirit,
+                                    enum pkt_ctrllen_e ctrllen);
+
+/******************************************************************************
+ * Name: spirit_pktcommon_get_controllen
+ *
+ * Description:
+ *   Returns the CONTROL field length for SPIRIT packets.
+ *
+ * Input Parameters:
+ *   spirit  - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   Control field length.
+ *
+ ******************************************************************************/
+
+uint8_t spirit_pktcommon_get_controllen(FAR struct spirit_library_s *spirit);
+
+/******************************************************************************
+ * Name: spirit_pktcommon_enable_crcfilter
+ *
+ * Description:
+ *   Enables or Disables the filtering on CRC.
+ *
+ * Input Parameters:
+ *   spirit   - Reference to a Spirit library state structure instance
+ *   newstate - New state for CRC_CHECK.  This parameter can be S_ENABLE or
+ *              S_DISABLE.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_pktcommon_enable_crcfilter(FAR struct spirit_library_s *spirit,
+                                      enum spirit_functional_state_e newstate);
 
 #ifdef __cplusplus
 }

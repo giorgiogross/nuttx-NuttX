@@ -1512,7 +1512,7 @@ uint8_t spirit_radio_dbm2reg(FAR struct spirit_library_s *spirit,
  *              is in the correct range [-PA_LOWER_LIMIT: PA_UPPER_LIMIT] dBm.
  *
  * Returned Value:
- *   None.
+ *   Zero (OK) on success.  A negated errno value is returned on any failure.
  *
  ******************************************************************************/
 
@@ -1540,6 +1540,86 @@ int spirit_radio_set_palevel(FAR struct spirit_library_s *spirit,
   /* Configures the PA_LEVEL register */
 
   return spirit_reg_write(spirit, address, &level, 1);
+}
+
+/******************************************************************************
+ * Name: spirit_radio_set_outputload
+ *
+ * Description:
+ *   Sets the output stage additional load capacitor bank.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *   load one of the possible value of the enum type enum spirit_paload_capacitor_e.
+ *         LOAD_0_PF    No additional PA load capacitor
+ *         LOAD_1_2_PF  1.2pF additional PA load capacitor
+ *         LOAD_2_4_PF  2.4pF additional PA load capacitor
+ *         LOAD_3_6_PF  3.6pF additional PA load capacitor
+ *
+ * Returned Value:
+ *   Zero (OK) on success.  A negated errno value is returned on any failure.
+ *
+ ******************************************************************************/
+
+int spirit_radio_set_outputload(FAR struct spirit_library_s *spirit,
+                                enum spirit_paload_capacitor_e load)
+{
+  uint8_t regval;
+  int ret;
+
+  /* Check the parameters */
+
+  DEBUGASSERT(IS_PA_LOAD_CAP(load));
+
+  /* Reads the PA_POWER_0 register */
+
+  ret = spirit_reg_read(spirit, PA_POWER0_BASE, &regval, 1);
+  if (ret >= 0)
+    {
+      /* Mask the CWC[1:0] field and write the new value */
+
+      regval &= 0x3f;
+      regval |= load;
+
+      /* Configures the PA_POWER_0 register */
+
+      ret = spirit_reg_write(spirit, PA_POWER0_BASE, &regval, 1);
+    }
+
+  return ret;
+}
+
+/******************************************************************************
+ * Name: spirit_radio_get_outputload
+ *
+ * Description:
+ *   Returns the output stage additional load capacitor bank.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   Output stage additional load capacitor bank.  This value may be:
+ *
+ *     LOAD_0_PF    No additional PA load capacitor
+ *     LOAD_1_2_PF  1.2pF additional PA load capacitor
+ *     LOAD_2_4_PF  2.4pF additional PA load capacitor
+ *     LOAD_3_6_PF  3.6pF additional PA load capacitor
+ *
+ ******************************************************************************/
+
+enum spirit_paload_capacitor_e
+  spirit_radio_get_outputload(FAR struct spirit_library_s *spirit)
+{
+  uint8_t regval;
+
+  /* Reads the PA_POWER_0 register */
+
+  (void)spirit_reg_read(spirit, PA_POWER0_BASE, &regval, 1);
+
+  /* Mask the CWC[1:0] field and return the value */
+
+  return (enum spirit_paload_capacitor_e) (regval & 0xc0);
 }
 
 /******************************************************************************

@@ -99,6 +99,10 @@
  * Pre-processor Definitions
  ******************************************************************************/
 
+/* PktBasic_Exported_Constants        Pkt Basic Exported Constants */
+
+#define IS_BASIC_LENGTH_WIDTH_BITS                      IS_PKT_LENGTH_WIDTH_BITS
+
 /* Macros used in assertions */
 
 /******************************************************************************
@@ -185,7 +189,7 @@ struct pktbasic_addr_s
  *
  * Input Parameters:
  *   spirit   - Reference to a Spirit library state structure instance
- *   pktpasic - Basic packet init structure.
+ *   pktbasic - Basic packet init structure.
  *
  * Returned Value:
  *   Zero (OK) on success; a negated errno value on failure.
@@ -193,7 +197,7 @@ struct pktbasic_addr_s
  ******************************************************************************/
 
 int spirit_pktbasic_initialize(FAR struct spirit_library_s *spirit,
-                               FAR const struct pktbasic_init_s *pktpasic);
+                               FAR const struct pktbasic_init_s *pktbasic);
 
 /******************************************************************************
  * Name:

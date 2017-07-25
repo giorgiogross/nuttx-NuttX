@@ -2,12 +2,12 @@
  * drivers/wireless/spirit/lib/spirit_management.c
  * The management layer for SPIRIT1 library.
  *
- *  Copyright(c) 2015 STMicroelectronics
- *  Author: VMA division - AMS
- *  Version 3.2.2 08-July-2015
+ *   Copyright(c) 2015 STMicroelectronics
+ *   Author: VMA division - AMS
+ *   Version 3.2.2 08-July-2015
  *
- *  Adapted for NuttX by:
- *  Author:  Gregory Nutt <gnutt@nuttx.org>
+ *   Adapted for NuttX by:
+ *   Author:  Gregory Nutt <gnutt@nuttx.org>
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -441,6 +441,116 @@ uint8_t spirit_managment_wavco_calibration(FAR struct spirit_library_s *spirit)
 }
 
 /******************************************************************************
+ * Name: spirit_management_txstrobe
+ *
+ * Description:
+ *
+ * Input Parameters:
+ *   spirit    - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   Zero (OK) is returned on success; A negated errno value is returned on
+ *   any failure.
+ *
+ ******************************************************************************/
+
+int spirit_management_txstrobe(FAR struct spirit_library_s *spirit)
+{
+  if (spirit->commstate != COMMUNICATION_STATE_TX)
+    {
+      uint8_t tmp;
+      int ret;
+
+      /* To achive the max output power */
+
+      if (spirit->commfrequency >= 150000000 &&
+          spirit->commfrequency <= 470000000)
+        {
+          /* Optimal setting for Tx mode only */
+
+          ret = spirit_radio_set_outputload(spirit, LOAD_3_6_PF);
+        }
+      else
+        {
+          /* Optimal setting for Tx mode only */
+
+          ret = spirit_radio_set_outputload(spirit, LOAD_0_PF);
+        }
+
+      if (ret < 0)
+        {
+          return ret;
+        }
+
+     /* Enable VCO_L buffer */
+
+      tmp = 0x11;
+      ret = spirit_reg_write(spirit, 0xa9, &tmp, 1);
+      if (ret < 0)
+        {
+          return ret;
+        }
+
+      /* Set SMPS switching frequency */
+
+      tmp = 0x20;
+      ret = spirit_reg_write(spirit, PM_CONFIG1_BASE, &tmp, 1);
+      if (ret < 0)
+        {
+          return ret;
+        }
+
+      spirit->commstate = COMMUNICATION_STATE_TX;
+    }
+
+  return OK;
+}
+
+/******************************************************************************
+ * Name: spirit_management_rxstrobe
+ *
+ * Description:
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   Zero (OK) is returned on success; A negated errno value is returned on
+ *   any failure.
+ *
+ ******************************************************************************/
+
+int spirit_management_rxstrobe(FAR struct spirit_library_s *spirit)
+{
+  uint8_t tmp;
+  int ret;
+
+  if (spirit->commstate != COMMUNICATION_STATE_RX)
+    {
+      /* Set SMPS switching frequency */
+
+      tmp = 0x98;
+      ret = spirit_reg_write(spirit, PM_CONFIG1_BASE, &tmp, 1);
+      if (ret < 0)
+        {
+          return ret;
+        }
+
+      /* Set the correct CWC parameter */
+
+      ret = spirit_radio_set_outputload(spirit, LOAD_0_PF);
+      if (ret < 0)
+        {
+          return ret;
+        }
+
+      spirit->commstate = COMMUNICATION_STATE_RX;
+    }
+
+  return OK;
+}
+
+/******************************************************************************
  * Name: spirit_management_initcommstate
  *
  * Description:
@@ -451,6 +561,7 @@ uint8_t spirit_managment_wavco_calibration(FAR struct spirit_library_s *spirit)
  *   frequency - Desired communication frequency
  *
  * Returned Value:
+ *   None
  *
  ******************************************************************************/
 
