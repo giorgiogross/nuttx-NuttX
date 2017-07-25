@@ -72,6 +72,7 @@
 #include "spirit_pktbasic.h"
 #include "spirit_qi.h"
 #include "spirit_timer.h"
+#include "spirit_csma.h"
 
 #include <arch/board/board.h>
 
@@ -229,17 +230,15 @@ static const struct spirit_gpio_init_s g_gpioinit =
   SPIRIT_GPIO_DIG_OUT_IRQ             /* gpioio */
 };
 
-#if 0
-static const struct spririt_csma_init_s g_csma_init =
+static const struct spirit_csma_init_s g_csma_init =
 {
+  1,                /* BU counter seed */
   S_ENABLE,         /* enable persistent mode */
   TBIT_TIME_64,     /* Tcca time */
   TCCA_TIME_3,      /* Lcca length */
   3,                /* max nr of backoffs (<8) */
-  1,                /* BU counter seed */
   8                 /* BU prescaler */
 };
-#endif
 
 /****************************************************************************
  * Private Functions
@@ -1131,15 +1130,13 @@ int spirit_hw_initialize(FAR struct spirit_driver_s *priv,
       return ret;
     }
 
-#if 0
   /* Setup CSMA/CA */
 
-  ret = csma_ca_init(&g_csma_init);
+  ret = spirit_csma_initialize(spirit, &g_csma_init);
   if (ret < 0)
     {
       return ret;
     }
-#endif
 
   /* Puts the SPIRIT1 in STANDBY mode (125us -> rx/tx) */
 
