@@ -1215,27 +1215,27 @@ int spirit_netdev_initialize(FAR struct spi_dev_s *spi,
 
   /* Initialize the IEEE 802.15.4 network device fields */
 
-  ieee                   = &priv->ieee;
-  ieee->i_get_mhrlen     = spirit_get_mhrlen; /* Get MAC header length */
-  ieee->i_req_data       = spirit_req_data;   /* Enqueue frame for transmission */
+  ieee                = &priv->ieee;
+  ieee->i_get_mhrlen  = spirit_get_mhrlen; /* Get MAC header length */
+  ieee->i_req_data    = spirit_req_data;   /* Enqueue frame for transmission */
 
   /* Initialize the common network device fields */
 
-  dev                    = &ieee->i_dev;
+  dev                 = &ieee->i_dev;
 #if 0
-  dev->d_buf             = pktbuf;            /* Single packet buffer */
+  dev->d_buf          = pktbuf;            /* Single packet buffer */
 #endif
-  dev->d_ifup            = spirit_ifup;       /* I/F up (new IP address) callback */
-  dev->d_ifdown          = spirit_ifdown;     /* I/F down callback */
-  dev->d_txavail         = spirit_txavail;    /* New TX data callback */
+  dev->d_ifup         = spirit_ifup;       /* I/F up (new IP address) callback */
+  dev->d_ifdown       = spirit_ifdown;     /* I/F down callback */
+  dev->d_txavail      = spirit_txavail;    /* New TX data callback */
 #ifdef CONFIG_NET_IGMP
-  dev->d_addmac          = spirit_addmac;     /* Add multicast MAC address */
-  dev->d_rmmac           = spirit_rmmac;      /* Remove multicast MAC address */
+  dev->d_addmac       = spirit_addmac;     /* Add multicast MAC address */
+  dev->d_rmmac        = spirit_rmmac;      /* Remove multicast MAC address */
 #endif
 #ifdef CONFIG_NETDEV_IOCTL
-  dev->d_ioctl           = spirit_ioctl;      /* Handle network IOCTL commands */
+  dev->d_ioctl        = spirit_ioctl;      /* Handle network IOCTL commands */
 #endif
-  dev->d_private = (FAR void *)priv;          /* Used to recover private state from dev */
+  dev->d_private      = (FAR void *)priv;  /* Used to recover private state from dev */
 
   /* Put the interface in the down state.  This usually amounts to resetting
    * the device and/or calling spirit_ifdown().

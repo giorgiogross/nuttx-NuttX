@@ -35,8 +35,9 @@
 
 # Include Spirit driver source files in the build
 
-CSRCS += spirit_radio.c spirit_pktbasic.c spirit_qi.c spirit_management.c
-CSRCS += spirit_csma.c spirit_irq.c spirit_timer.c spirit_gpio.c spirit_spi.c
+CSRCS += spirit_radio.c spirit_pktbasic.c spirit_qi.c spirit_calibration.c
+CSRCS += spirit_management.c spirit_csma.c spirit_irq.c spirit_timer.c
+CSRCS += spirit_gpio.c spirit_spi.c
 
 # Include Spirit driver build support
 

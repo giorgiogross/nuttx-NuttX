@@ -153,6 +153,7 @@ struct spirit_library_s
   } u;
 
   uint8_t commstate;                 /* MANAGEMENT: Communication state */
+  uint8_t vcocalib;                  /* RADIO: Enalbe VCO calibration WA */
 };
 
 #ifdef __cplusplus

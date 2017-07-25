@@ -360,6 +360,30 @@ int spirit_radio_set_xtalflag(FAR struct spirit_library_s *spirit,
 enum xtal_flag_e spirit_radio_get_xtalflag(FAR struct spirit_library_s *spirit);
 
 /******************************************************************************
+ * Name: spirit_radio_search_wcp
+ *
+ * Description:
+ *   Returns the charge pump word for a given VCO frequency.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *   fc     - Channel center frequency expressed in Hz. This parameter may
+ *            be a value in one of the following ranges:
+ *
+ *              High_Band:     from 779 MHz to 915 MHz
+ *              Middle Band:   from 387 MHz to 470 MHz
+ *              Low Band:      from 300 MHz to 348 MHz
+ *              Very low Band: from 150 MHz to 174 MHz
+ *
+ * Returned Value:
+ *   Charge pump word.
+ *
+ ******************************************************************************/
+
+uint8_t spirit_radio_search_wcp(FAR struct spirit_library_s *spirit,
+                                uint32_t fc);
+
+/******************************************************************************
  * Name: spirit_radio_get_synthword
  *
  * Description:
@@ -438,6 +462,97 @@ enum spirit_bandselect_e
   spirit_radio_get_band(FAR struct spirit_library_s *spirit);
 
 /******************************************************************************
+ * Name: spirit_radio_set_chspace
+ *
+ * Description:
+ *   Sets the channel space factor in channel space register.  The channel
+ *   spacing step is computed as F_Xo/32768.
+ *
+ * Input Parameters:
+ *   spirit  - Reference to a Spirit library state structure instance
+ *   chspace - The channel space expressed in Hz.
+ *
+ * Returned Value:
+ *   Zero (OK) is returned on success; a negated errno value is returned on
+ *   any failure.
+ *
+ ******************************************************************************/
+
+int spirit_radio_set_chspace(FAR struct spirit_library_s *spirit,
+                              uint32_t chspace);
+
+/******************************************************************************
+ * Name: spirit_radio_get_chspace
+ *
+ * Description:
+ *   Returns the channel space register.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   Channel space. The channel space is:
+ *
+ *     CS = channel_space_factor x XtalFrequency/2^15
+ *
+ *   where channel_space_factor is the CHSPACE register value.
+ *
+ ******************************************************************************/
+
+uint32_t spirit_radio_get_chspace(FAR struct spirit_library_s *spirit);
+
+/******************************************************************************
+ * Name: spirit_radio_set_channel
+ *
+ * Description:
+ *   Sets the channel number.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *   chnum the channel number.
+ *
+ * Returned Value:
+ *   Zero (OK) is returned on success.  A negated errno value is returned on
+ *   any failure.
+ *
+ ******************************************************************************/
+
+int spirit_radio_set_channel(FAR struct spirit_library_s *spirit,
+                             uint8_t chnum);
+
+/******************************************************************************
+ * Name: spirit_radio_get_channel
+ *
+ * Description:
+ *   Returns the actual channel number.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   Actual channel number.
+ *
+ ******************************************************************************/
+
+uint8_t spirit_radio_get_channel(FAR struct spirit_library_s *spirit);
+
+/******************************************************************************
+ * Name: spirit_radio_get_foffset
+ *
+ * Description:
+ *   Returns the actual frequency offset.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   Frequency offset expressed in Hz as signed word.
+ *
+ ******************************************************************************/
+
+int32_t spirit_radio_get_foffset(FAR struct spirit_library_s *spirit);
+
+/******************************************************************************
  * Name: spirit_radio_set_basefrequency
  *
  * Description:
@@ -459,7 +574,26 @@ int spirit_radio_set_basefrequency(FAR struct spirit_library_s *spirit,
                                    uint32_t fbase);
 
 /******************************************************************************
- * Name: 
+ * Name: spirit_radio_enable_wavco_calibration
+ *
+ * Description:
+ *   Enable/disabe the VCO calibration WA at the end of
+ *   spirit_radio_set_basefrequency()
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *   S_ENABLE or S_DISABLE the WA procedure.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ******************************************************************************/
+
+void spirit_radio_enable_wavco_calibration(FAR struct spirit_library_s *spirit,
+                                           enum spirit_functional_state_e newstate);
+
+/******************************************************************************
+ * Name: spirit_radio_get_basefrequency
  *
  * Description:
  *   Returns the base carrier frequency.
