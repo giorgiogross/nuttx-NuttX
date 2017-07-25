@@ -63,10 +63,18 @@
  * Pre-processor Definitions
  ******************************************************************************/
 
+/* Macro used to compute the lower part of the packet length, to write in
+ * the PCKTLEN0 and BUILD_PCKTLEN1 registers.  len is the length of the
+ * packet payload.
+ */
+
+#define BUILD_PCKTLEN0(len)            ((len) & 0xff)
+#define BUILD_PCKTLEN1(len)            ((len) >> 8)
+
 /* Macros used in assertions */
 
-#define IS_PKT_LENGTH_WIDTH_BITS(bits)                ((bits) <= 16)
-#define IS_PKT_SEQ_NUMBER_RELOAD(seqn)                ((seqn) <= 3)
+#define IS_PKT_LENGTH_WIDTH_BITS(bits)  ((bits) <= 16)
+#define IS_PKT_SEQ_NUMBER_RELOAD(seqn)  ((seqn) <= 3)
 
 #define IS_PKT_PREAMBLE_LENGTH(len) \
   ((len == PKT_PREAMBLE_LENGTH_01BYTE)  || (len == PKT_PREAMBLE_LENGTH_02BYTES)  || \

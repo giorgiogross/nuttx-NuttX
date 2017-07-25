@@ -146,8 +146,8 @@ struct spirit_csma_init_s
 {
   uint16_t seed;            /* Specifies the BU counter seed. Not used
                               * in persistent mode. */
-  uint8_t csmapersistent;   /* Specifies if the CSMA persistent mode 
-                             * has to be on or off. This parameter can be 
+  uint8_t csmapersistent;   /* Specifies if the CSMA persistent mode
+                             * has to be on or off. This parameter can be
                              * S_ENABLE or S_DISABLE */
   uint8_t multbit;          /* Specifies the Tbit multiplier to obtain the
                              * Tcca. This parameter can be a value from

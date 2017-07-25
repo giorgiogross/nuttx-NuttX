@@ -45,25 +45,6 @@
 #include "spirit_spi.h"
 
 /******************************************************************************
- * Pre-processor Definitions
- ******************************************************************************/
-
-/******************************************************************************
- * Private Functions
- ******************************************************************************/
-
-/******************************************************************************
- * Name:
- *
- * Description:
- *
- * Parameters:
- *
- * Returned Value:
- *
- ******************************************************************************/
-
-/******************************************************************************
  * Public Functions
  ******************************************************************************/
 
@@ -267,6 +248,52 @@ enum spirit_functional_state_e
 }
 
 /******************************************************************************
+ * Name: spirit_pktbasic_set_payloadlen
+ *
+ * Description:
+ *   Sets the payload length for SPIRIT Basic packets. Since the packet length
+ *   depends from the address and the control field size, this function reads
+ *   the correspondent registers in order to determine the correct packet
+ *   length to be written.
+ *
+ * Input Parameters:
+ *   spirit     - Reference to a Spirit library state structure instance
+ *   payloadlen - Payload length in bytes.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value is returned on any failure.
+ *
+ ******************************************************************************/
+
+int spirit_pktbasic_set_payloadlen(FAR struct spirit_library_s *spirit,
+                                   uint16_t payloadlen)
+{
+  uint8_t regval[2];
+  uint16_t oversize = 0;
+
+  /* Computes the oversize (address + control) size */
+
+  if (spirit_pktbase_get_addrfield(spirit))
+    {
+      oversize = 1;
+    }
+
+  oversize += (uint16_t)spirit_pktcommon_get_controllen(spirit);
+
+  /* Computes PCKTLEN0 value from payloadlen */
+
+  regval[1] = BUILD_PCKTLEN0(payloadlen + oversize);
+
+  /* Computes PCKTLEN1 value from payloadlen */
+
+  regval[0] = BUILD_PCKTLEN1(payloadlen + oversize);
+
+  /* Writes data on the PCKTLEN1/0 register */
+
+  return spirit_reg_write(spirit, PCKTLEN1_BASE, regval, 2);
+}
+
+/******************************************************************************
  * Name: spirit_pktbasic_rxpktlen
  *
  * Description:
@@ -302,4 +329,3 @@ uint16_t spirit_pktbasic_rxpktlen(FAR struct spirit_library_s *spirit)
 
   return (((((uint16_t) regval[0]) << 8) + (uint16_t)regval[1]) - oversize);
 }
-

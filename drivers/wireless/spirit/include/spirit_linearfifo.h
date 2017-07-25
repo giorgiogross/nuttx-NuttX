@@ -94,7 +94,7 @@ uint8_t spirit_fifo_get_rxcount(FAR struct spirit_library_s *spirit);
 uint8_t spirit_fifo_get_txcount(FAR struct spirit_library_s *spirit);
 
 /******************************************************************************
- * Name: 
+ * Name: spirit_fifo_set_rxalmostfull
  *
  * Description:
  *   Sets the almost full threshold for the Rx FIFO. When the number of

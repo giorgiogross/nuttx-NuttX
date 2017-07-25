@@ -284,7 +284,7 @@ uint8_t spirit_managment_wavco_calibration(FAR struct spirit_library_s *spirit)
     {
       return ret;
     }
- 
+
   if (spirit->u.state.MC_STATE == MC_STATE_STANDBY)
     {
       standby = true;
