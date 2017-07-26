@@ -200,6 +200,97 @@ int spirit_pktbasic_initialize(FAR struct spirit_library_s *spirit,
                                FAR const struct pktbasic_init_s *pktbasic);
 
 /******************************************************************************
+ * Name: spirit_pktbasic_get_setup
+ *
+ * Description:
+ *   Returns the SPIRIT Basic packet structure according to the specified
+ *   parameters in the registers.
+ *
+ * Input Parameters:
+ *   spirit   - Reference to a Spirit library state structure instance
+ *   pktbasic - Basic packet init structure.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_pktbasic_get_setup(FAR struct spirit_library_s *spirit,
+                              FAR struct pktbasic_init_s *pktbasic);
+
+/******************************************************************************
+ * Name: spirit_pktbasic_addr_initialize
+ *
+ * Description:
+ *   Initializes the SPIRIT Basic packet addresses according to the specified
+ *   parameters in the struct struct pktbasic_init_s struct.
+ *
+ * Input Parameters:
+ *   spirit    - Reference to a Spirit library state structure instance
+ *   basicaddr - Basic packet addresses init structure.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_pktbasic_addr_initialize(FAR struct spirit_library_s *spirit,
+                                    FAR struct pktbasic_addr_s *basicaddr);
+
+/******************************************************************************
+ * Name: spirit_pktbasic_get_addrsetup
+ *
+ * Description:
+ *   Returns the SPIRIT Basic packet addresses structure according to the
+ *   specified parameters in the registers.
+ *
+ * Input Parameters:
+ *   spirit    - Reference to a Spirit library state structure instance
+ *   basicaddr - Basic packet addresses init structure.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_pktbasic_get_addrsetup(FAR struct spirit_library_s *spirit,
+                                  FAR struct pktbasic_addr_s *basicaddr);
+
+/******************************************************************************
+ * Name: spirit_pktbasic_set_format
+ *
+ * Description:
+ *   Configures the Basic packet format as packet used by SPIRIT.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_pktbasic_set_format(FAR struct spirit_library_s *spirit);
+
+/******************************************************************************
+ * Name: spirit_pktbase_set_addrfield
+ *
+ * Description:
+ *   Sets the address length for SPIRIT Basic packets.
+ *
+ * Input Parameters:
+ *   spirit     - Reference to a Spirit library state structure instance
+ *   txdestaddr - Length of ADDRESS in bytes.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_pktbase_set_addrfield(FAR struct spirit_library_s *spirit,
+                                 enum spirit_functional_state_e txdestaddr);
+
+/******************************************************************************
  * Name: spirit_pktbase_get_addrfield
  *
  * Description:
@@ -239,6 +330,25 @@ int spirit_pktbasic_set_payloadlen(FAR struct spirit_library_s *spirit,
                                    uint16_t payloadlen);
 
 /******************************************************************************
+ * Name: spirit_pktbase_get_payloadlen
+ *
+ * Description:
+ *   Returns the payload length for SPIRIT Basic packets. Since the packet
+ *   length depends from the address and the control field size, this function
+ *   reads the correspondent registers in order to determine the correct
+ *   payload length to be returned.
+ *
+ * Input Parameters:
+ *   spirit - Reference to a Spirit library state structure instance
+ *
+ * Returned Value:
+ *   Payload length in bytes.
+ *
+ ******************************************************************************/
+
+uint16_t spirit_pktbase_get_payloadlen(FAR struct spirit_library_s *spirit);
+
+/******************************************************************************
  * Name: spirit_pktbasic_rxpktlen
  *
  * Description:
@@ -253,5 +363,27 @@ int spirit_pktbasic_set_payloadlen(FAR struct spirit_library_s *spirit,
  ******************************************************************************/
 
 uint16_t spirit_pktbasic_rxpktlen(FAR struct spirit_library_s *spirit);
+
+/******************************************************************************
+ * Name: spirit_pktbasic_set_varlen
+ *
+ * Description:
+ *   Computes and sets the variable payload length for SPIRIT Basic packets.
+ *
+ * Input Parameters:
+ *   spirit     - Reference to a Spirit library state structure instance
+ *   payloadlen - Payload length in bytes.
+ *   txdestaddr - Enable or Disable Address Field.
+ *   ctrllen    - Control length in bytes.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value is returned on any failure.
+ *
+ ******************************************************************************/
+
+int spirit_pktbasic_set_varlen(FAR struct spirit_library_s *spirit,
+                               uint16_t payloadlen,
+                               enum spirit_functional_state_e txdestaddr,
+                               enum pkt_ctrllen_e ctrllen);
 
 #endif /* __DRIVERS_WIRELESS_SPIRIT_INCLUDE_SPIRIT_PKTBASIC_H*/
