@@ -166,7 +166,7 @@ static void spirit_lock(FAR struct spirit_driver_s *priv);
 
 static int spirit_waitstatus(FAR struct spirit_library_s *spirit,
                              enum spirit_state_e state, unsigned int msec);
-static int spirit_set_readystate(FAR struct spirit_library_s *spirit);
+static int spirit_set_readystate(FAR struct spirit_driver_s *priv);
 
 /* TX-related logic */
 
@@ -383,20 +383,24 @@ static int spirit_waitstatus(FAR struct spirit_library_s *spirit,
  *
  ****************************************************************************/
 
-static int spirit_set_readystate(FAR struct spirit_library_s *spirit)
+static int spirit_set_readystate(FAR struct spirit_driver_s *priv)
 {
+  FAR struct spirit_library_s *spirit = &priv->spirit;
   int ret;
 
-  ret = spirit_irq_clr_pending(spirit);
+  DEBUGASSERT(priv->lower != NULL && priv->lower->enable != NULL);
+  priv->lower->enable(priv->lower, false);
+
+  ret = spirit_command(spirit, CMD_FLUSHRXFIFO);
   if (ret < 0)
     {
-      return ret;
+      goto errout_with_irqdisable;
     }
 
   ret = spirit_update_status(spirit);
   if (ret < 0)
     {
-      return ret;
+      goto errout_with_irqdisable;
     }
 
   if (spirit->u.state.MC_STATE == MC_STATE_STANDBY)
@@ -406,14 +410,17 @@ static int spirit_set_readystate(FAR struct spirit_library_s *spirit)
   else if(spirit->u.state.MC_STATE == MC_STATE_RX)
     {
       ret = spirit_command(spirit, CMD_SABORT);
-      if (ret < 0)
-        {
-          return ret;
-        }
-
-      ret = spirit_irq_clr_pending(spirit);
     }
 
+  if (ret < 0)
+    {
+      goto errout_with_irqdisable;
+    }
+
+  ret = spirit_irq_clr_pending(spirit);
+
+errout_with_irqdisable:
+  priv->lower->enable(priv->lower, true);
   return ret;
 }
 
@@ -467,6 +474,14 @@ static int spirit_transmit(FAR struct spirit_driver_s *priv)
 
       priv->state = DRIVER_STATE_SENDING;
 
+      /* Reset state to ready */
+
+      ret = spirit_set_readystate(priv);
+      if (ret < 0)
+        {
+          goto errout_with_iob;
+        }
+
       /* Sets the length of the packet to send */
 
       ret = spirit_command(spirit, COMMAND_FLUSHTXFIFO);
@@ -499,7 +514,6 @@ static int spirit_transmit(FAR struct spirit_driver_s *priv)
 
       /* Puts the SPIRIT1 in TX state */
 
-      spirit_set_readystate(spirit);
       ret = spirit_command(spirit, COMMAND_TX);  /* Starts transmission */
       if (ret < 0)
         {
@@ -507,57 +521,6 @@ static int spirit_transmit(FAR struct spirit_driver_s *priv)
         }
 
       ret = spirit_waitstatus(spirit, MC_STATE_TX, 5);
-      if (ret < 0)
-        {
-          goto errout_with_iob;
-        }
-
-      ret = spirit_waitstatus(spirit, MC_STATE_TX, 50);
-      if (ret < 0)
-        {
-          goto errout_with_iob;
-        }
-
-      /* REVISIT:  Is the following needed if we are not doing immediate RX of ACK? */
-      /* Reset radio - needed for immediate RX of ack */
-
-      (void)spirit_irq_clr_pending(spirit);
-
-      /* Force exit from RX or TX states and to to IDLE */
-
-      ret = spirit_command(spirit, COMMAND_SABORT);
-      if (ret < 0)
-        {
-          goto errout_with_iob;
-        }
-
-      ret = spirit_waitstatus(spirit, MC_STATE_READY, 1);
-      if (ret < 0)
-        {
-          goto errout_with_iob;
-        }
-
-      /* Go to the READY state then RX state */
-
-      ret = spirit_command(spirit, COMMAND_READY);
-      if (ret < 0)
-        {
-          goto errout_with_iob;
-        }
-
-      ret = spirit_waitstatus(spirit, MC_STATE_READY, 1);
-      if (ret < 0)
-        {
-          goto errout_with_iob;
-        }
-
-      ret = spirit_command(spirit, COMMAND_RX);
-      if (ret < 0)
-        {
-          goto errout_with_iob;
-        }
-
-      ret = spirit_waitstatus(spirit, MC_STATE_RX, 1);
       if (ret < 0)
         {
           goto errout_with_iob;
@@ -790,6 +753,17 @@ static void spirit_interrupt_work(FAR void *arg)
       spirit_schedule_transmit_work(priv);
     }
 
+#ifdef CONFIG_SPIRIT_FIFOS
+  /* The IRQ_TX_FIFO_ALMOST_EMPTY notifies an nearly empty TX fifo.
+   * Necessary for sending large packets > sizeof(TX FIFO).
+   */
+
+  if (irqstatus.IRQ_TX_FIFO_ALMOST_EMPTY != 0)
+    {
+#warning Missing logic
+    }
+#endif
+
   /* The IRQ_VALID_SYNC bit is used to notify a new packet is coming */
 
   if (irqstatus.IRQ_VALID_SYNC != 0)
@@ -878,6 +852,17 @@ static void spirit_interrupt_work(FAR void *arg)
             }
         }
     }
+
+#ifdef CONFIG_SPIRIT_FIFOS
+  /* The IRQ_RX_FIFO_ALMOST_FULL notifies an nearly full RX fifo.
+   * Necessary for receiving large packets > sizeof(RX FIFO).
+   */
+
+  if (irqstatus.IRQ_RX_FIFO_ALMOST_FULL != 0)
+    {
+#warning Missing logic
+    }
+#endif
 
   /* IRQ_RX_DATA_DISC indicates that Rx data was discarded */
 
@@ -1411,8 +1396,8 @@ static int spirit_addmac(FAR struct net_driver_s *dev, FAR const uint8_t *mac)
  * Name: spirit_rmmac
  *
  * Description:
- *   NuttX Callback: Remove the specified MAC address from the hardware multicast
- *   address filtering
+ *   NuttX Callback: Remove the specified MAC address from the hardware
+ *   multicast address filtering
  *
  * Parameters:
  *   dev  - Reference to the NuttX driver state structure
