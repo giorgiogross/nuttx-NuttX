@@ -135,10 +135,13 @@ struct spirit_driver_s
   FAR const struct spirit_lower_s *lower;     /* Low-level MCU-specific support */
   FAR struct iob_s                *txhead;    /* Head of pending TX transfers */
   FAR struct iob_s                *txtail;    /* Tail of pending TX transfers */
+  FAR struct iob_s                *rxhead;    /* Head of completed RX transfers */
+  FAR struct iob_s                *rxtail;    /* Tail of completed RX transfers */
   struct work_s                    hpwork;    /* Interrupt continuation work queue support */
   struct work_s                    lpwork;    /* Net poll work queue support */
   WDOG_ID                          txpoll;    /* TX poll timer */
   WDOG_ID                          txtimeout; /* TX timeout timer */
+  sem_t                            exclsem;   /* Mutually exclusive access */
   bool                             ifup;      /* Spirit is on and interface is up */
   uint8_t                          state;     /* See  enum spirit_driver_state_e */
   uint8_t                          panid[2];  /* PAN identifier, ffff = not set */
@@ -158,14 +161,25 @@ struct spirit_driver_s
 
 /* Helpers */
 
+static void spirit_lock(FAR struct spirit_driver_s *priv);
+#define spirit_unlock(priv) sem_post(&priv->exclsem);
+
 static int spirit_waitstatus(FAR struct spirit_library_s *spirit,
                              enum spirit_state_e state, unsigned int msec);
 static int spirit_set_readystate(FAR struct spirit_library_s *spirit);
 
-/* Common TX logic */
+/* TX-related logic */
 
 static int  spirit_transmit(FAR struct spirit_driver_s *priv);
-static int  spirit_txpoll(FAR struct net_driver_s *dev);
+static void sprit_transmit_work(FAR void *arg);
+static void spirit_schedule_transmit_work(FAR struct spirit_driver_s *priv);
+
+static int  spirit_txpoll_callback(FAR struct net_driver_s *dev);
+
+/* RX-related logic */
+
+static void sprit_receive_work(FAR void *arg);
+static void spirit_schedule_receive_work(FAR struct spirit_driver_s *priv);
 
 /* Interrupt handling */
 
@@ -273,6 +287,28 @@ static const struct spirit_csma_init_s g_csma_init =
  * Name: spirit_waitstatus
  *
  * Description:
+ *   Get exclusive access to the driver instance and to the spirit library.
+ *
+ * Parameters:
+ *   priv - Reference to a driver state structure instance
+ *
+ * Returned Value:
+ *   None
+ *
+ ****************************************************************************/
+
+static void spirit_lock(FAR struct spirit_driver_s *priv)
+{
+  while (sem_wait(&priv->exclsem) < 0)
+    {
+      DEBUGASSERT(errno == EINTR);
+    }
+}
+
+/****************************************************************************
+ * Name: spirit_waitstatus
+ *
+ * Description:
  *   Poll until the Spirit status is the requested value or until a timeout
  *   occurs.
  *
@@ -283,6 +319,9 @@ static const struct spirit_csma_init_s g_csma_init =
  *
  * Returned Value:
  *   OK on success; a negated errno on a timeout
+ *
+ * Assumptions:
+ *   We have exclusive access to the driver state and to the spirit library.
  *
  ****************************************************************************/
 
@@ -338,6 +377,9 @@ static int spirit_waitstatus(FAR struct spirit_library_s *spirit,
  *
  * Returned Value:
  *   OK on success; a negated errno on a timeout
+ *
+ * Assumptions:
+ *   We have exclusive access to the driver state and to the spirit library.
  *
  ****************************************************************************/
 
@@ -399,6 +441,7 @@ static int spirit_transmit(FAR struct spirit_driver_s *priv)
    * is not busy with another reception or transmission.
    */
 
+  spirit_lock(priv);
   while (priv->txhead != NULL && priv->state == DRIVER_STATE_IDLE)
     {
       /* Remove the IOB from the head of the TX queue */
@@ -438,6 +481,16 @@ static int spirit_transmit(FAR struct spirit_driver_s *priv)
           goto errout_with_iob;
         }
 
+      /* Enable CSMA */
+
+      ret = spirit_csma_enable(spirit, S_ENABLE);
+      if (ret < 0)
+        {
+          goto errout_with_iob;
+        }
+
+      /* Write the packet to the linear FIFO */
+
       ret = spirit_fifo_write(spirit, iob->io_data, iob->io_len);
       if (ret < 0)
         {
@@ -456,13 +509,13 @@ static int spirit_transmit(FAR struct spirit_driver_s *priv)
       ret = spirit_waitstatus(spirit, MC_STATE_TX, 5);
       if (ret < 0)
         {
-          return ret;
+          goto errout_with_iob;
         }
 
       ret = spirit_waitstatus(spirit, MC_STATE_TX, 50);
       if (ret < 0)
         {
-          return ret;
+          goto errout_with_iob;
         }
 
       /* REVISIT:  Is the following needed if we are not doing immediate RX of ACK? */
@@ -481,7 +534,7 @@ static int spirit_transmit(FAR struct spirit_driver_s *priv)
       ret = spirit_waitstatus(spirit, MC_STATE_READY, 1);
       if (ret < 0)
         {
-          return ret;
+          goto errout_with_iob;
         }
 
       /* Go to the READY state then RX state */
@@ -495,7 +548,7 @@ static int spirit_transmit(FAR struct spirit_driver_s *priv)
       ret = spirit_waitstatus(spirit, MC_STATE_READY, 1);
       if (ret < 0)
         {
-          return ret;
+          goto errout_with_iob;
         }
 
       ret = spirit_command(spirit, COMMAND_RX);
@@ -507,7 +560,7 @@ static int spirit_transmit(FAR struct spirit_driver_s *priv)
       ret = spirit_waitstatus(spirit, MC_STATE_RX, 1);
       if (ret < 0)
         {
-          return ret;
+          goto errout_with_iob;
         }
 
       /* Setup the TX timeout watchdog (perhaps restarting the timer) */
@@ -516,16 +569,70 @@ static int spirit_transmit(FAR struct spirit_driver_s *priv)
                      spirit_txtimeout_expiry, 1, (wdparm_t)priv);
     }
 
+  spirit_unlock(priv);
   return OK;
 
 errout_with_iob:
+  spirit_unlock(priv);
   NETDEV_RXDROPPED(&priv->ieee.i_dev);
   iob_free(iob);
   return ret;
 }
 
 /****************************************************************************
- * Name: spirit_txpoll
+ * Name: sprit_transmit_work
+ *
+ * Description:
+ *   Send data on the LP work queue.
+ *
+ * Parameters:
+ *   arg - Reference to driver state structure (cast to void *)
+ *
+ * Returned Value:
+ *   None
+ *
+ ****************************************************************************/
+
+static void sprit_transmit_work(FAR void *arg)
+{
+  FAR struct spirit_driver_s *priv = (FAR struct spirit_driver_s *)arg;
+
+  DEBUGASSERT(priv != NULL);
+
+  net_lock();
+  spirit_transmit(priv);
+  net_unlock();
+}
+
+/****************************************************************************
+ * Name: spirit_schedule_transmit_work
+ *
+ * Description:
+ *   Schedule to send data on the LP work queue.
+ *
+ * Parameters:
+ *   priv - Reference to driver state structure
+ *
+ * Returned Value:
+ *   None
+ *
+ * Assumptions:
+ *   Called from logic running the HP work queue.
+ *
+ ****************************************************************************/
+
+static void spirit_schedule_transmit_work(FAR struct spirit_driver_s *priv)
+{
+  if(priv->txhead != NULL && priv->state == DRIVER_STATE_IDLE)
+    {
+      /* Schedule to perform the TX processing on the worker thread. */
+
+      work_queue(LPWORK, &priv->lpwork, sprit_transmit_work, priv, 0);
+    }
+}
+
+/****************************************************************************
+ * Name: spirit_txpoll_callback
  *
  * Description:
  *   The transmitter is available, check if the network has any outgoing
@@ -548,12 +655,66 @@ errout_with_iob:
  *
  ****************************************************************************/
 
-static int spirit_txpoll(FAR struct net_driver_s *dev)
+static int spirit_txpoll_callback(FAR struct net_driver_s *dev)
 {
-  FAR struct spirit_driver_s *priv = (FAR struct spirit_driver_s *)dev->d_private;
-#warning Missing logic
-  UNUSED(priv);
+  /* If zero is returned, the polling will continue until all connections have
+   * been examined.
+   */
+
   return 0;
+}
+
+/****************************************************************************
+ * Name: sprit_receive_work
+ *
+ * Description:
+ *   Pass received packets to the network on the LP work queue.
+ *
+ * Parameters:
+ *   arg - Reference to driver state structure (cast to void *)
+ *
+ * Returned Value:
+ *   None
+ *
+ ****************************************************************************/
+
+static void sprit_receive_work(FAR void *arg)
+{
+  FAR struct spirit_driver_s *priv = (FAR struct spirit_driver_s *)arg;
+
+  DEBUGASSERT(priv != NULL);
+
+  net_lock();
+#warning Missing logic
+  //spirit_receive(priv);
+  net_unlock();
+}
+
+/****************************************************************************
+ * Name: spirit_schedule_receive_work
+ *
+ * Description:
+ *   Schedule to receive data on the LP work queue.
+ *
+ * Parameters:
+ *   priv - Reference to driver state structure
+ *
+ * Returned Value:
+ *   None
+ *
+ * Assumptions:
+ *   Called from logic running the HP work queue.
+ *
+ ****************************************************************************/
+
+static void spirit_schedule_receive_work(FAR struct spirit_driver_s *priv)
+{
+  if(priv->txhead != NULL && priv->state == DRIVER_STATE_IDLE)
+    {
+      /* Schedule to perform the TX processing on the worker thread. */
+
+      work_queue(LPWORK, &priv->lpwork, sprit_receive_work, priv, 0);
+    }
 }
 
 /****************************************************************************
@@ -575,6 +736,7 @@ static void spirit_interrupt_work(FAR void *arg)
 
   /* Get the interrupt source from radio */
 
+  spirit_lock(priv);
   DEBUGVERIFY(spirit_irq_get_pending(spirit, &irqstatus));
   DEBUGVERIFY(spirit_irq_clr_pending(spirit));
 
@@ -587,11 +749,12 @@ static void spirit_interrupt_work(FAR void *arg)
       DEBUGVERIFY(spirit_command(spirit, CMD_FLUSHRXFIFO));
 
       priv->state = DRIVER_STATE_IDLE;
-      NETDEV_TXERRORS(&priv->ieee.i_dev);
+      NETDEV_RXERRORS(&priv->ieee.i_dev);
 
       /* Send any pending packets */
 
-      spirit_transmit(priv);
+      spirit_csma_enable(spirit, S_DISABLE);
+      spirit_schedule_transmit_work(priv);
     }
 
   if (irqstatus.IRQ_TX_FIFO_ERROR != 0)
@@ -600,11 +763,12 @@ static void spirit_interrupt_work(FAR void *arg)
       DEBUGVERIFY(spirit_command(spirit, COMMAND_FLUSHTXFIFO));
 
       priv->state = DRIVER_STATE_IDLE;
-      NETDEV_RXERRORS(&priv->ieee.i_dev);
+      NETDEV_TXERRORS(&priv->ieee.i_dev);
 
       /* Send any pending packets */
 
-      spirit_transmit(priv);
+      spirit_csma_enable(spirit, S_DISABLE);
+      spirit_schedule_transmit_work(priv);
     }
 
   /* The IRQ_TX_DATA_SENT bit notifies that a packet was sent. */
@@ -617,12 +781,13 @@ static void spirit_interrupt_work(FAR void *arg)
       DEBUGVERIFY(spirit_command(spirit, CMD_RX));
 
       NETDEV_TXDONE(&priv->ieee.i_dev)
+      spirit_csma_enable(spirit, S_DISABLE);
 
       /* Check if there are more packets to send */
 
       DEBUGASSERT(priv->state == DRIVER_STATE_SENDING);
       priv->state = DRIVER_STATE_IDLE;
-      spirit_transmit(priv);
+      spirit_schedule_transmit_work(priv);
     }
 
   /* The IRQ_VALID_SYNC bit is used to notify a new packet is coming */
@@ -651,7 +816,7 @@ static void spirit_interrupt_work(FAR void *arg)
 
           /* Send any pending packets */
 
-          spirit_transmit(priv);
+          spirit_schedule_transmit_work(priv);
         }
       else
         {
@@ -671,7 +836,7 @@ static void spirit_interrupt_work(FAR void *arg)
 
               /* Send any pending packets */
 
-              spirit_transmit(priv);
+              spirit_schedule_transmit_work(priv);
             }
           else
             {
@@ -686,12 +851,30 @@ static void spirit_interrupt_work(FAR void *arg)
 
               NETDEV_RXPACKETS(&priv->ieee.i_dev);
 
-              /* Create the packet meta data and forward to the network */
+              /* Add the IO buffer to the tail of the completed RX transfers */
+
+              iob->io_flink = priv->rxtail;
+              priv->rxtail  = iob;
+
+              if (priv->rxhead == NULL)
+                {
+                  priv->rxhead = iob;
+                }
+
+              /* Create the packet meta data and forward to the network.  This
+               * must be done on the LP work queue with the network lockes.
+               */
 #warning Missing logic
+
+              /* Forward the packet to the network.  This must be done on the
+               * LP work queue with the network locked.
+               */
+
+              spirit_schedule_receive_work(priv);
 
               /* Try sending the next packet */
 
-              spirit_transmit(priv);
+              spirit_schedule_transmit_work(priv);
             }
         }
     }
@@ -724,6 +907,7 @@ static void spirit_interrupt_work(FAR void *arg)
 
   DEBUGASSERT(priv->lower != NULL && priv->lower->enable != NULL);
   priv->lower->enable(priv->lower, true);
+  spirit_unlock(priv);
 }
 
 /****************************************************************************
@@ -736,9 +920,9 @@ static void spirit_interrupt_work(FAR void *arg)
 
 static int spirit_interrupt(int irq, FAR void *context, FAR void *arg)
 {
-  FAR struct spirit_driver_s *dev = (FAR struct spirit_driver_s *)arg;
+  FAR struct spirit_driver_s *priv = (FAR struct spirit_driver_s *)arg;
 
-  DEBUGASSERT(dev != NULL);
+  DEBUGASSERT(priv != NULL);
 
   /* TODO: Determine if a TX transfer just completed .
    * If a TX transfer just completed, then cancel the TX timeout so
@@ -759,10 +943,10 @@ static int spirit_interrupt(int irq, FAR void *context, FAR void *arg)
    * Interrupts are re-enabled in enc_irqworker() when the work is completed.
    */
 
-  dev->lower->enable(dev->lower, false);
+  priv->lower->enable(priv->lower, false);
 
-  return work_queue(HPWORK, &dev->hpwork, spirit_interrupt_work,
-                    (FAR void *)dev, 0);
+  return work_queue(HPWORK, &priv->hpwork, spirit_interrupt_work,
+                    (FAR void *)priv, 0);
 }
 
 /****************************************************************************
@@ -802,7 +986,7 @@ static void spirit_txtimeout_work(FAR void *arg)
 
   /* Then poll the network for new XMIT data */
 
-  (void)devif_poll(&priv->ieee.i_dev, spirit_txpoll);
+  (void)devif_poll(&priv->ieee.i_dev, spirit_txpoll_callback);
   net_unlock();
 }
 
@@ -878,7 +1062,8 @@ static inline void spirit_poll_process(FAR struct spirit_driver_s *priv)
  *   OK on success
  *
  * Assumptions:
- *   The network is locked.
+ *   Scheduled on the LP worker thread  from the poll timer expiration
+ *   handler.
  *
  ****************************************************************************/
 
@@ -894,18 +1079,9 @@ static void spirit_poll_work(FAR void *arg)
 
   net_lock();
 
-  /* Perform the poll */
+  /* Perform the periodic poll */
 
-  /* Check if there is room in the send another TX packet.  We cannot perform
-   * the TX poll if he are unable to accept another packet for transmission.
-   */
-
-  /* If so, update TCP timing states and poll the network for new XMIT data.
-   * Hmmm.. might be bug here.  Does this mean if there is a transmit in
-   * progress, we will missing TCP time state updates?
-   */
-
-  (void)devif_timer(&priv->ieee.i_dev, spirit_txpoll);
+  (void)devif_timer(&priv->ieee.i_dev, spirit_txpoll_callback);
 
   /* Setup the watchdog poll timer again */
 
@@ -954,49 +1130,86 @@ static void spirit_poll_expiry(int argc, wdparm_t arg, ...)
  * Returned Value:
  *   None
  *
- * Assumptions:
+ *   Called from the network layer and running on the LP working thread.
  *
  ****************************************************************************/
 
 static int spirit_ifup(FAR struct net_driver_s *dev)
 {
   FAR struct spirit_driver_s *priv = (FAR struct spirit_driver_s *)dev->d_private;
+  FAR struct spirit_library_s *spirit;
+  int ret;
 
-#ifdef CONFIG_NET_IPv4
-  ninfo("Bringing up: %d.%d.%d.%d\n",
-        dev->d_ipaddr & 0xff, (dev->d_ipaddr >> 8) & 0xff,
-        (dev->d_ipaddr >> 16) & 0xff, dev->d_ipaddr >> 24);
-#endif
-#ifdef CONFIG_NET_IPv6
-  ninfo("Bringing up: %04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x\n",
-        dev->d_ipv6addr[0], dev->d_ipv6addr[1], dev->d_ipv6addr[2],
-        dev->d_ipv6addr[3], dev->d_ipv6addr[4], dev->d_ipv6addr[5],
-        dev->d_ipv6addr[6], dev->d_ipv6addr[7]);
-#endif
+  DEBUGASSERT(priv != NULL);
+  spirit = &priv->spirit;
 
-  /* Initialize PHYs, the Spirit interface, and setup up Spirit interrupts */
+  if (!priv->ifup)
+    {
+      ninfo("Bringing up: %04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x\n",
+            dev->d_ipv6addr[0], dev->d_ipv6addr[1], dev->d_ipv6addr[2],
+            dev->d_ipv6addr[3], dev->d_ipv6addr[4], dev->d_ipv6addr[5],
+            dev->d_ipv6addr[6], dev->d_ipv6addr[7]);
 
-  /* Instantiate the MAC address from dev->d_mac.ether.ether_addr_octet */
+      /* Disable spirit interrupts */
 
-#ifdef CONFIG_NET_ICMPv6
-  /* Set up IPv6 multicast address filtering */
+      DEBUGASSERT(priv->lower->enable != NULL);
+      priv->lower->enable(priv->lower, false);
 
-  spirit_ipv6multicast(priv);
-#endif
+      /* Ensure we are in READY state as we go from there to Rx.
+       * Since spirit interrupts are disabled, we don't need to be concerned
+       * about mutual exclusion.
+       */
 
-  /* Set and activate a timer process */
+      ret = spirit_command(spirit, CMD_READY);
+      if (ret < 0)
+        {
+          return ret;
+        }
 
-  (void)wd_start(priv->txpoll, SPIRIT_WDDELAY, spirit_poll_expiry, 1,
-                 (wdparm_t)priv);
+      ret = spirit_waitstatus(spirit, MC_STATE_READY, 5);
+      if (ret < 0)
+        {
+          goto error_with_ifalmostup;
+        }
 
-  /* Enable the Spirit interrupt */
+      /* Now we go to Rx */
 
-  priv->ifup = true;
+      ret = spirit_command(spirit, CMD_RX);
+      if (ret < 0)
+        {
+          goto error_with_ifalmostup;
+        }
 
-  DEBUGASSERT(priv->lower->enable != NULL);
-  priv->lower->enable(priv->lower, true);
+      ret = spirit_waitstatus(spirit, MC_STATE_RX, 5);
+      if (ret < 0)
+        {
+          goto error_with_ifalmostup;
+        }
+
+      /* Instantiate the MAC address from dev->d_mac.ether.ether_addr_octet */
+#warning Missing logic
+
+      /* Set and activate a timer process */
+
+      (void)wd_start(priv->txpoll, SPIRIT_WDDELAY, spirit_poll_expiry, 1,
+                     (wdparm_t)priv);
+
+      /* Enables the interrupts from the SPIRIT1 */
+
+      DEBUGASSERT(priv->lower->enable != NULL);
+      priv->lower->enable(priv->lower, true);
+
+      /* We are up! */
+
+      priv->ifup = true;
+  }
 
   return OK;
+
+error_with_ifalmostup:
+  priv->ifup = true;
+  (void)spirit_ifdown(dev);
+  return ret;
 }
 
 /****************************************************************************
@@ -1012,36 +1225,80 @@ static int spirit_ifup(FAR struct net_driver_s *dev)
  *   None
  *
  * Assumptions:
+ *   Called from the network layer and running on the LP working thread.
  *
  ****************************************************************************/
 
 static int spirit_ifdown(FAR struct net_driver_s *dev)
 {
   FAR struct spirit_driver_s *priv = (FAR struct spirit_driver_s *)dev->d_private;
-  irqstate_t flags;
+  FAR struct spirit_library_s *spirit;
+  int ret = OK;
 
-  /* Disable the Spirit interrupt */
+  DEBUGASSERT(priv != NULL);
+  spirit = &priv->spirit;
 
-  flags = enter_critical_section();
+  if (priv->ifup)
+    {
+      irqstate_t flags;
+      int status;
 
-  DEBUGASSERT(priv->lower->enable != NULL);
-  priv->lower->enable(priv->lower, false);
+      /* Disable the Spirit interrupt */
 
-  /* Cancel the TX poll timer and TX timeout timers */
+      flags = enter_critical_section();
 
-  wd_cancel(priv->txpoll);
-  wd_cancel(priv->txtimeout);
+      DEBUGASSERT(priv->lower->enable != NULL);
+      priv->lower->enable(priv->lower, false);
 
-  /* Put the EMAC in its reset, non-operational state.  This should be
-   * a known configuration that will guarantee the spirit_ifup() always
-   * successfully brings the interface back up.
-   */
+      /* Cancel the TX poll timer and TX timeout timers */
 
-  /* Mark the device "down" */
+      wd_cancel(priv->txpoll);
+      wd_cancel(priv->txtimeout);
+      leave_critical_section(flags);
 
-  priv->ifup = false;
-  leave_critical_section(flags);
-  return OK;
+      /* First stop Rx/Tx
+       * Since spirit interrupts are disabled, we don't need to be concerned
+       * about mutual exclusion.
+       */
+
+      status = spirit_command(spirit, CMD_SABORT);
+      if (status < 0 && ret == 0)
+        {
+          ret = status;
+        }
+
+      /* Clear any pending irqs */
+
+      status = spirit_irq_clr_pending(spirit);
+      if (status < 0 && ret == 0)
+        {
+          ret = status;
+        }
+
+      status = spirit_waitstatus(spirit, MC_STATE_READY, 5);
+      if (status < 0 && ret == 0)
+        {
+          ret = status;
+        }
+
+      /* Put the SPIRIT1 in STANDBY */
+
+      status = spirit_command(spirit, CMD_STANDBY);
+      if (status < 0 && ret == 0)
+        {
+          ret = status;
+        }
+
+      status = spirit_waitstatus(spirit, MC_STATE_STANDBY, 5);
+      if (status < 0 && ret == 0)
+        {
+          ret = status;
+        }
+
+      priv->ifup = false;
+    }
+
+  return ret;
 }
 
 /****************************************************************************
@@ -1081,7 +1338,7 @@ static void spirit_txavail_work(FAR void *arg)
 
       /* If so, then poll the network for new XMIT data */
 
-      (void)devif_poll(&priv->ieee.i_dev, spirit_txpoll);
+      (void)devif_poll(&priv->ieee.i_dev, spirit_txpoll_callback);
     }
 
   net_unlock();
@@ -1102,7 +1359,7 @@ static void spirit_txavail_work(FAR void *arg)
  *   None
  *
  * Assumptions:
- *   Called in normal user mode
+ *   Called from network logic running on the LP work queue
  *
  ****************************************************************************/
 
@@ -1115,6 +1372,7 @@ static int spirit_txavail(FAR struct net_driver_s *dev)
    * availability action.
    */
 
+  spirit_lock(priv);
   if (work_available(&priv->lpwork))
     {
       /* Schedule to serialize the poll on the worker thread. */
@@ -1122,6 +1380,7 @@ static int spirit_txavail(FAR struct net_driver_s *dev)
       work_queue(LPWORK, &priv->lpwork, spirit_txavail_work, priv, 0);
     }
 
+  spirit_unlock(priv);
   return OK;
 }
 
@@ -1221,6 +1480,7 @@ static int spirit_ioctl(FAR struct net_driver_s *dev, int cmd,
 
   /* Decode and dispatch the driver-specific IOCTL command */
 
+  spirit_lock(priv);
   switch (cmd)
     {
       /* Add cases here to support the IOCTL commands */
@@ -1230,6 +1490,7 @@ static int spirit_ioctl(FAR struct net_driver_s *dev, int cmd,
         ret = -ENOTTY;  /* Special return value for this case */
     }
 
+  spirit_unlock(priv);
   return ret;
 }
 #endif
@@ -1248,6 +1509,9 @@ static int spirit_ioctl(FAR struct net_driver_s *dev, int cmd,
  *   A non-negative MAC headeer length is returned on success; a negated
  *   errno value is returned on any failure.
  *
+ * Assumptions:
+ *   Called from network logic running on the low-priority work queue.
+ *
  ****************************************************************************/
 
 static int spirit_get_mhrlen(FAR struct ieee802154_driver_s *netdev,
@@ -1258,6 +1522,9 @@ static int spirit_get_mhrlen(FAR struct ieee802154_driver_s *netdev,
   DEBUGASSERT(netdev != NULL && netdev->i_dev.d_private != NULL && meta != NULL);
   priv = (FAR struct spirit_driver_s *)netdev->i_dev.d_private;
 
+  spirit_lock(priv);
+#warning Missing logic
+  spirit_unlock(priv);
   return -ENOSYS;
 }
 
@@ -1275,6 +1542,9 @@ static int spirit_get_mhrlen(FAR struct ieee802154_driver_s *netdev,
  * Returned Value:
  *   Zero (OK) returned on success; a negated errno value is returned on
  *   any failure.
+ *
+ * Assumptions:
+ *   Called from network logic with the network locked.
  *
  ****************************************************************************/
 
@@ -1294,6 +1564,7 @@ static int spirit_req_data(FAR struct ieee802154_driver_s *netdev,
 
   /* Add the incoming list of frames to the MAC's outgoing queue */
 
+  spirit_lock(priv);
   for (iob = framelist; iob != NULL; iob = framelist)
     {
       /* Increment statistics */
@@ -1319,12 +1590,13 @@ static int spirit_req_data(FAR struct ieee802154_driver_s *netdev,
         }
 
       /* If there are no transmissions or receptions in progress, then start
-       * tranmssion of the frame in the IOB at the head of the IOB queue.
+       * tranmission of the frame in the IOB at the head of the IOB queue.
        */
 
        spirit_transmit(priv);
     }
 
+  spirit_unlock(priv);
   return OK;
 }
 
@@ -1601,6 +1873,8 @@ int spirit_netdev_initialize(FAR struct spi_dev_s *spi,
   priv->txtimeout     = wd_create();   /* Create TX timeout timer */
 
   DEBUGASSERT(priv->txpoll != NULL && priv->txtimeout != NULL);
+
+  sem_init(&priv->exclsem, 0, 1);
 
   /* Initialize the IEEE 802.15.4 network device fields */
 
