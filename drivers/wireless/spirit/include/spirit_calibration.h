@@ -1,5 +1,5 @@
 /******************************************************************************
- * include/nuttx/wireless/spirit/spirit_calibration.h
+ * include/nuttx/wireless/spirit/include/spirit_calibration.h
  * Configuration and management of SPIRIT VCO-RCO calibration.
  *
  *   Copyright(c) 2015 STMicroelectronics
@@ -34,8 +34,8 @@
  *
  ******************************************************************************/
 
-#ifndef __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_CALIBRAITON_H
-#define __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_CALIBRAITON_H
+#ifndef __DRIVERS_WIRELESS_SPIRIT_INCLUDE_SPIRIT_CALIBRAITON_H
+#define __DRIVERS_WIRELESS_SPIRIT_INCLUDE_SPIRIT_CALIBRAITON_H
 
 /* This module allows the user to set some parameters which deal with the
  * oscillators calibration.  The state machine of Spirit contemplates some
@@ -369,4 +369,4 @@ int spirit_calib_select_vco(FAR struct spirit_library_s *spirit,
 
 enum spirit_vcoselect_e spirit_calib_get_vco(FAR struct spirit_library_s *spirit);
 
-#endif /* __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_CALIBRAITON_H */
+#endif /* __DRIVERS_WIRELESS_SPIRIT_INCLUDE_SPIRIT_CALIBRAITON_H */

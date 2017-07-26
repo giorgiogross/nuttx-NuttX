@@ -1,5 +1,5 @@
 /******************************************************************************
- * drivers/wireless/spirit/spirit_directrf.c
+ * drivers/wireless/spirit/lib/spirit_directrf.c
  * Configuration and management of SPIRIT direct transmission / receive modes.
  *
  *  Copyright(c) 2015 STMicroelectronics

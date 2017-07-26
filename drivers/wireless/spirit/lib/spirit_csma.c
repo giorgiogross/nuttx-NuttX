@@ -1,5 +1,5 @@
 /******************************************************************************
- * drivers/wireless/spirit/spirit_csma.c
+ * drivers/wireless/spirit/lib/spirit_csma.c
  * Configuration and management of SPIRIT CSMA.
  *
  *   Copyright(c) 2015 STMicroelectronics

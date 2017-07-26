@@ -1,5 +1,5 @@
 /******************************************************************************
- * include/nuttx/wireless/spirit/spirit_pktbasic.h
+ * include/nuttx/wireless/spirit/include/spirit_pktbasic.h
  * Configuration and management of SPIRIT Basic packets.
  *
  *   Copyright(c) 2015 STMicroelectronics
@@ -34,8 +34,8 @@
  *
  ******************************************************************************/
 
-#ifndef __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_PKTBASIC_H
-#define __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_PKTBASIC_H
+#ifndef __DRIVERS_WIRELESS_SPIRIT_INCLUDE_SPIRIT_PKTBASIC_H
+#define __DRIVERS_WIRELESS_SPIRIT_INCLUDE_SPIRIT_PKTBASIC_H
 
 /* This module can be used to manage the configuration of Spirit Basic
  * packets.  The user can obtain a packet configuration filling the
@@ -118,8 +118,8 @@ struct pktbasic_init_s
   uint32_t syncwords;    /* Specifies the sync words. This parameter is
                           * a uint32_t word with format:
                           * 0x|SYNC1|SYNC2|SYNC3|SYNC4 */
-  uint8_t premblen;      /* Specifies the preamble length. This parameter
-                          * can be any value from enum pkt_premblen_e */
+  uint8_t preamblen;      /* Specifies the preamble length. This parameter
+                          * can be any value from enum pkt_preamblen_e */
   uint8_t synclen;       /* Specifies the sync word length.  The 32bit
                           * word passed (syncwords) will be stored in
                           * the SYNCx registers from the MSB until the
@@ -254,4 +254,4 @@ int spirit_pktbasic_set_payloadlen(FAR struct spirit_library_s *spirit,
 
 uint16_t spirit_pktbasic_rxpktlen(FAR struct spirit_library_s *spirit);
 
-#endif /* __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_PKTBASIC_H*/
+#endif /* __DRIVERS_WIRELESS_SPIRIT_INCLUDE_SPIRIT_PKTBASIC_H*/

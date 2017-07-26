@@ -1,5 +1,5 @@
 /******************************************************************************
- * include/nuttx/wireless/spirit/spirit_radio.h
+ * include/nuttx/wireless/spirit/include/spirit_radio.h
  * This file provides all the low level API to manage Analog and Digital radio
  * part of SPIRIT.
  *
@@ -35,8 +35,8 @@
  *
  ******************************************************************************/
 
-#ifndef __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_RADIO_H
-#define __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_RADIO_H
+#ifndef __DRIVERS_WIRELESS_SPIRIT_INCLUDE_SPIRIT_RADIO_H
+#define __DRIVERS_WIRELESS_SPIRIT_INCLUDE_SPIRIT_RADIO_H
 
 /* In order to configure the Radio main parameters, the user can fit struct
  * radio_init_s structure the and call the spirit_radio_initialize()
@@ -875,6 +875,25 @@ int spirit_radio_afcfreezeonsync(FAR struct spirit_library_s *spirit,
                                  enum spirit_functional_state_e newstate);
 
 /******************************************************************************
+ * Name: spirit_radio_enable_csblanking
+ *
+ * Description:
+ *   Enables or Disables the received data blanking when the CS is under the
+ *   threshold.
+ *
+ * Input Parameters:
+ *   spirit   - Reference to a Spirit library state structure instance
+ *   newstate - New state of this mode.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ******************************************************************************/
+
+int spirit_radio_enable_csblanking(FAR struct spirit_library_s *spirit,
+                                   enum spirit_functional_state_e newstate);
+
+/******************************************************************************
  * Name: spirit_radio_persistentrx
  *
  * Description:
@@ -962,4 +981,4 @@ int spirit_radio_enable_digdivider(FAR struct spirit_library_s *spirit,
 enum spirit_functional_state_e
   spirit_radio_isenabled_digdivider(FAR struct spirit_library_s *spirit);
 
-#endif /* __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_RADIO_H*/
+#endif /* __DRIVERS_WIRELESS_SPIRIT_INCLUDE_SPIRIT_RADIO_H*/

@@ -76,7 +76,7 @@ int spirit_pktbasic_initialize(FAR struct spirit_library_s *spirit,
 
   /* Check the parameters */
 
-  DEBUGASSERT(IS_PKT_PREAMBLE_LENGTH(pktpasic->premblen));
+  DEBUGASSERT(IS_PKT_PREAMBLE_LENGTH(pktpasic->preamblen));
   DEBUGASSERT(IS_PKT_SYNC_LENGTH(pktpasic->synclen));
   DEBUGASSERT(IS_PKT_CRC_MODE(pktpasic->crcmode));
   DEBUGASSERT(IS_PKT_LENGTH_WIDTH_BITS(pktpasic->pktlenwidth));
@@ -153,7 +153,7 @@ int spirit_pktbasic_initialize(FAR struct spirit_library_s *spirit,
 
   /* Preamble, sync and fixed or variable length setting */
 
-  regval[2] = (uint8_t)pktpasic->premblen | (uint8_t)pktpasic->synclen |
+  regval[2] = (uint8_t)pktpasic->preamblen | (uint8_t)pktpasic->synclen |
               (uint8_t)pktpasic->fixedvarlen;
 
   /* CRC length, whitening and FEC setting */

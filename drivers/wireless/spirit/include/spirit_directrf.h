@@ -1,5 +1,5 @@
 /******************************************************************************
- * include/nuttx/wireless/spirit/spirit_directrf.h
+ * include/nuttx/wireless/spirit/include/spirit_directrf.h
  * Configuration and management of SPIRIT direct transmission / receive modes.
  *
  *   Copyright(c) 2015 STMicroelectronics
@@ -34,8 +34,8 @@
  *
  ******************************************************************************/
 
-#ifndef __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_DIRECTRF_H
-#define __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_DIRECTRF_H
+#ifndef __DRIVERS_WIRELESS_SPIRIT_INCLUDE_SPIRIT_DIRECTRF_H
+#define __DRIVERS_WIRELESS_SPIRIT_INCLUDE_SPIRIT_DIRECTRF_H
 
 /* This module contains functions to manage the direct Tx/Rx mode.
  * The user can choose the way to send data to Spirit through the
@@ -179,4 +179,4 @@ enum spirit_directtx_e
 }
 #endif
 
-#endif /* __INCLUDE_NUTT_WIRELESS_SPIRIT_SPIRIT_DIRECTRF_H */
+#endif /* __DRIVERS_WIRELESS_SPIRIT_INCLUDE_SPIRIT_DIRECTRF_H */
