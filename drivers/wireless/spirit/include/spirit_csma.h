@@ -165,6 +165,25 @@ struct spirit_csma_init_s
  * Public Function Prototypes
  ******************************************************************************/
 
+/******************************************************************************
+ * Name: spirit_csma_initialize
+ *
+ * Description:
+ *   Initializes the SPIRIT CSMA according to the specified parameters in the
+ *   struct spirit_csma_init_s.
+ *
+ * Input Parameters:
+ *   spirit   - Reference to a Spirit library state structure instance
+ *   csmainit - Reference to the Csma init structure.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; A negated errno value is returned on any failure.
+ *
+ ******************************************************************************/
+
+int spirit_csma_initialize(FAR struct spirit_library_s *spirit,
+                           FAR const struct spirit_csma_init_s *csmainit);
+
 #ifdef __cplusplus
 }
 #endif

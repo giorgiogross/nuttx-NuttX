@@ -65,7 +65,7 @@
  ******************************************************************************/
 
 int spirit_csma_initialize(FAR struct spirit_library_s *spirit,
-                           FAR struct spirit_csma_init_s *csmainit)
+                           FAR const struct spirit_csma_init_s *csmainit)
 {
   uint8_t regval[5];
   int ret;
