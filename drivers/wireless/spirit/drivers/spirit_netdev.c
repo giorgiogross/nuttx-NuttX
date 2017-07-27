@@ -1752,7 +1752,7 @@ int spirit_hw_initialize(FAR struct spirit_driver_s *priv,
       return ret;
     }
 
-  ret = spirit_timer_set_rxtimeout(spirit, 0); /* 0=No timeout */
+  ret = spirit_timer_set_rxtimeout_counter(spirit, 0); /* 0=No timeout */
   if (ret < 0)
     {
       return ret;
