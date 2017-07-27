@@ -96,7 +96,7 @@
 #endif
 
 #ifndef CONFIG_SPIRIT_PKTLEN
-#  define CONFIG_SPIRIT_PKTLEN 128
+#  define CONFIG_SPIRIT_PKTLEN 96
 #endif
 
 #ifndef CONFIG_SPIRIT_MTU
