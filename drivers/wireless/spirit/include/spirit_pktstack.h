@@ -94,7 +94,7 @@
  * ...
  *
  * spirit_pktstack_set_payloadlen(spirit, 20);
- * spirit_pktstack_set_destaddr(spirit, 0x44);
+ * spirit_pktcommon_set_nodeaddress(spirit, 0x44);
  *
  * ...
  *
