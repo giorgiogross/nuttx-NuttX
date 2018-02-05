@@ -2,7 +2,8 @@
  * include/nuttx/i2c/i2c_master.h
  *
  *   Copyright(C) 2009-2012, 2016 Gregory Nutt. All rights reserved.
- *   Author: Gregory Nutt <gnutt@nuttx.org>
+ *   Author: Gregory Nutt <gnutt@nuttx.org>,
+ *           Giorgio Gross <giorgio.gross@robodev.eu>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -246,6 +247,37 @@ extern "C"
 #ifdef CONFIG_I2C_DRIVER
 int i2c_register(FAR struct i2c_master_s *i2c, int bus);
 #endif
+
+/****************************************************************************
+ * Name: i2cmux_lower_half
+ *
+ * Description:
+ *   Create a virtual i2c master instance.
+ *
+ *   Transfer and reset calls on the created virtual i2c master instance will
+ *   be piped through the i2cmux lower half implementation. Each virtual i2c master
+ *   instance is associated with an i2c multiplexer and a port on that multiplexer
+ *   and will be registered as /dev/i2cN where N is the passed minor.
+ *
+ * Input Parameters:
+ *   i2cmux - An instance of the i2c mutliplexer
+ *   vi2c   - Pointer to the virtual i2c master; will be set to thevirtual i2c master instance
+ *   port   - The associated port on the multiplexer
+ *   minor  - The I2C bus number.  This will be used as the I2C device minor
+ *     number.  The virtual I2C character device will be registered as /dev/i2cN
+ *     where N is the minor number
+ *
+ * Returned Value:
+ *   OK if the driver was successfully register; A negated errno value is
+ *   returned on any failure.
+ *
+ ****************************************************************************/
+
+#if defined CONFIG_I2C_DRIVER && defined CONFIG_I2CMUX_LOWER_HALF
+struct i2cmultiplexer_dev_s* i2cmux;
+int i2cmux_lower_half(FAR struct i2cmultiplexer_dev_s* i2cmux, FAR struct i2c_master_s** vi2c,
+                        uint8_t port);
+#endif  // CONFIG_I2C_DRIVER && CONFIG_I2CMUX_LOWER_HALF
 
 /****************************************************************************
  * Name: i2c_writeread
