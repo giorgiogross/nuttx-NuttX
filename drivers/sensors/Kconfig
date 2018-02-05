@@ -431,6 +431,13 @@ config SENSORS_VEML6070
 	---help---
 		Enable driver support for the Vishay VEML6070 UV-A light sensor.
 
+config VCNL4040
+	bool "Vishay VCNL4040 Proximity and Ambient Light Sensor"
+	default n
+	select I2C
+	---help---
+		Enable driver support for the Vishay VCNL4040 Proximity and Ambient Light Sensor.
+
 config VEML6070_I2C_FREQUENCY
 	int "VEML6070 I2C frequency"
 	default 100000
