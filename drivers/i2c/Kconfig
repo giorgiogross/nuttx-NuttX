@@ -36,29 +36,11 @@ config I2C_DRIVER
 		this driver is to support I2C testing.  It is not suitable for use
 		in any real driver application.
 
-menu "I2C Multiplexer Support"
-
-config I2CMULTIPLEXER
-	bool "Enable I2C Multiplexer Support"
+config PCA9540BDP
+	bool "NXP PCA9540BDP multiplexer"
 	default n
 	---help---
-		This directory holds implementations of I2C multiplexer drivers.
-		See include/nuttx/i2c/i2cmultiplexer.h for registration information.
-
-if I2CMULTIPLEXER
-
-config I2CMUX_LOWER_HALF
-	bool "I2C Multiplexer Lower Half"
-	default y
-	depends on I2C && I2C_DRIVER && I2CMULTIPLEXER
-	---help---
-		Enable support for a lower half driver that provides common i2c multiplexer
-		driver support for i2c multiplexer devices.
-
-# put common config setting here
-
-endif # I2CMULTIPLEXER
-
-endmenu # I2C Multiplexer Support
+		NXP PCA9540BDP i2c multiplexer support
 
 endif # I2C
+
