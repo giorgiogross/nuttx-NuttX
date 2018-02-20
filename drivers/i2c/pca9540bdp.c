@@ -2,7 +2,7 @@
  * drivers/i2c/pca9540bdp.c
  * Driver for the PCA9540BDP i2c multiplexer
  *
- *   Copyright (C) 2018 Giorgio Groß. All rights reserved.
+ *   Copyright (C) 2017 Giorgio Groß. All rights reserved.
  *   Author: Giorgio Groß <giorgio.gross@robodev.eu>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,39 +48,47 @@
 #include <nuttx/kmalloc.h>
 #include <nuttx/fs/fs.h>
 #include <nuttx/i2c/i2c_master.h>
-#include "pca9540bdp.h"
-#include <nuttx/i2c/i2cmultiplexer.h>
 #include <nuttx/i2c/pca9540bdp.h>
 
-#ifdef CONFIG_I2CMULTIPLEXER_PCA9540BDP
+#if defined(CONFIG_I2C) && defined(CONFIG_PCA9540BDP)
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#ifndef CONFIG_PCA9549BDP_I2C_FREQUENCY
+#  define CONFIG_PCA9549BDP_I2C_FREQUENCY   400000  /* 400 khz */
+#endif
+
+#define PCA9540BDP_CH_BITMASK               0x03
+#define PCA9540BDP_ENABLE_BITMASK           0x04
+
+#define PCA9540BDP_CH_BIT                   0
+#define PCA9540BDP_CH_NONE_BIT              1
+#define PCA9540BDP_ENABLE_BIT               2
+
+/****************************************************************************
+ * Private
+ ****************************************************************************/
+
+struct pca9540bdp_dev_s
+{
+  FAR struct i2c_master_s *i2c; /* I2C interface */
+  uint16_t addr;
+  uint8_t state;  /* control register state */
+};
 
 /****************************************************************************
  * Private Function Prototypes
  ****************************************************************************/
 /* I2C Helpers */
 
-static int pca9540bdp_write_config(FAR struct pca9540bdp_dev_s *priv,
+static int     pca9540bdp_write_config(FAR struct pca9540bdp_dev_s *priv,
                              FAR uint8_t regvalue);
-static int pca9540bdp_read_config(FAR struct pca9540bdp_dev_s *priv,
+static int     pca9540bdp_read_config(FAR struct pca9540bdp_dev_s *priv,
                              FAR uint8_t *regvalue);
 
-/* Other helpers */
-
-static int pca9540bdp_select_port(FAR struct pca9540bdp_dev_s *priv, uint8_t val);
-
-/* I2C multiplexer vtable */
-
-static int pca9540bdp_transfer_on_port (FAR struct i2cmultiplexer_dev_s* dev, uint8_t port,
-                    FAR struct i2c_msg_s *msgs, int count);
-#ifdef CONFIG_I2C_RESET
-static int pca9540bdp_reset_on_port (FAR struct i2cmultiplexer_dev_s* dev, uint8_t port);
-#endif
-
-/* Chararcter driver methods. Note that common i2c multiplexer functionality is
-   implemented by g_pca9540bdp_ops while the character driver methods allow
-   calls to (here) ioctl and read to directly communicate with the multiplexer.
-   That way we can both access all provided functionality of the device and use
-   it as a common i2c multiplexer */
+/* Character driver methods */
 
 static int     pca9540bdp_open(FAR struct file *filep);
 static int     pca9540bdp_close(FAR struct file *filep);
@@ -93,14 +101,6 @@ static int     pca9540bdp_ioctl(FAR struct file *filep,int cmd,unsigned long arg
 /****************************************************************************
  * Private Data
  ****************************************************************************/
-
-static const struct i2cmultiplexer_ops_s g_pca9540bdp_ops =
-{
-  pca9540bdp_transfer_on_port
-#ifdef CONFIG_I2C_RESET
-  , pca9540bdp_reset_on_port
-#endif
-};
 
 static const struct file_operations g_pca9540bdpfops =
 {
@@ -115,7 +115,6 @@ static const struct file_operations g_pca9540bdpfops =
 #endif
 };
 
-
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
@@ -128,8 +127,7 @@ static int pca9540bdp_write_config(FAR struct pca9540bdp_dev_s *priv,
   iconf.address = priv->addr;
   iconf.addrlen = 7;
   int ret = i2c_write(priv->i2c, &iconf, &regvalue, 1);
-
-  i2cinfo("Write to address 0x%02X; register value: 0x%02x  ret: %d\n", priv->addr, regvalue, ret);
+  i2cinfo("address: 0x%02X register_value: 0x%02x  ret: %d\n", priv->addr, regvalue, ret);
   return ret;
 }
 
@@ -142,72 +140,9 @@ static int pca9540bdp_read_config(FAR struct pca9540bdp_dev_s *priv,
   iconf.addrlen = 7;
   int ret = i2c_read(priv->i2c, &iconf, regvalue, 1);
 
-  i2cinfo("Read from address: 0x%02X; register value: 0x%02x  ret: %d\n", priv->addr, *regvalue, ret);
+  i2cinfo("address: 0x%02X register_value: 0x%02x  ret: %d\n", priv->addr, *regvalue, ret);
   return ret;
 }
-
-static int pca9540bdp_select_port(FAR struct pca9540bdp_dev_s *priv, uint8_t val)
-{
-  if(val != PCA9540BDP_SEL_PORT0 && val != PCA9540BDP_SEL_PORT1)
-    {
-
-      /* port not supported */
-
-      return -EINVAL;
-    }
-
-  if((PCA9540BDP_ENABLE | val) == priv->state)
-    {
-
-      /* port already selected */
-
-      return OK;
-    }
-
-  /* modify state and write it to the mux */
-
-  priv->state = PCA9540BDP_ENABLE | val;
-  return (pca9540bdp_write_config(priv, priv->state) == 0) ? OK : -ECOMM;
-}
-
-static int pca9540bdp_transfer_on_port (FAR struct i2cmultiplexer_dev_s* dev, uint8_t port,
-                    FAR struct i2c_msg_s *msgs, int count)
-{
-  FAR struct pca9540bdp_dev_s* priv = (struct pca9540bdp_dev_s*) dev;
-
-  /* select the mux port */
-
-  if(pca9540bdp_select_port(priv, port) != OK)
-    {
-      i2cwarn("Could not select proper mux port\n");
-      return -ECOMM;  /* signal error condition */
-    }
-
-  /* resume the i2c transfer to the device connected to the mux port */
-
-  int ret = I2C_TRANSFER(priv->i2c, msgs, count);
-  return ret;
-}
-
-#ifdef CONFIG_I2C_RESET
-static int pca9540bdp_reset_on_port (FAR struct i2cmultiplexer_dev_s* dev, uint8_t port)
-{
-  FAR struct pca9540bdp_dev_s* priv = (pca9540bdp_dev_s*) dev;
-
-  /* select the mux port */
-
-  if(pca9540bdp_select_port(priv, port) != OK)
-    {
-      i2cwarn("Could not select proper mux port\n");
-      return -ECOMM;  /* signal error condition */
-    }
-
-  /* resume the i2c reset for the device connected to the mux port */
-
-  int ret = I2C_RESET(priv->i2c);
-  return ret;
-}
-#endif
 
 /****************************************************************************
  * Name: pca9540bdp_open
@@ -248,13 +183,11 @@ static ssize_t pca9540bdp_read(FAR struct file *filep, FAR char *buffer, size_t 
   DEBUGASSERT(priv != NULL);
 
   if(buflen >= 1 && pca9540bdp_read_config(priv, (uint8_t *)buffer) == OK)
-    {
-      ret = 1;
-    }
-  else
-    {
-      ret = -EINVAL;
-    }
+  {
+    ret = 1;
+  } else {
+    ret = -EINVAL;
+  }
   return ret;
 }
 
@@ -276,7 +209,6 @@ static int pca9540bdp_ioctl(FAR struct file *filep, int cmd, unsigned long arg)
 {
   FAR struct inode      *inode = filep->f_inode;
   FAR struct pca9540bdp_dev_s *priv  = inode->i_private;
-  int res = -ENOTTY;
 
   DEBUGASSERT(priv != NULL);
 
@@ -287,23 +219,35 @@ static int pca9540bdp_ioctl(FAR struct file *filep, int cmd, unsigned long arg)
       case PCA9540BDPIOC_DISABLE:
         {
           priv->state = PCA9540BDP_DISABLE;
-          res = (pca9540bdp_write_config(priv, priv->state) == 0) ? OK : -ECOMM;
           break;
         }
 
-      /* Write port selection bit */
+      /* Write channel selection bit */
 
-      case PCA9540BDPIOC_SEL_PORT:
+      case PCA9540BDPIOC_SEL_CH:
         {
           uint8_t val = (uint8_t) arg;
-          res = pca9540bdp_select_port(priv, val);
+
+          if(val == PCA9540BDP_SEL_CH0)
+          {
+            priv->state = PCA9540BDP_ENABLE | PCA9540BDP_SEL_CH0;
+          }
+          else if(val == PCA9540BDP_SEL_CH1)
+          {
+            priv->state = PCA9540BDP_ENABLE | PCA9540BDP_SEL_CH1;
+          }
+          else
+          {
+            return -EINVAL;
+          }
           break;
         }
 
       default:
         i2cinfo("Unrecognized cmd: %d\n", cmd);
+        return -ENOTTY;
     }
-  return res;
+  return pca9540bdp_write_config(priv, priv->state);
 }
 
 /****************************************************************************
@@ -311,7 +255,7 @@ static int pca9540bdp_ioctl(FAR struct file *filep, int cmd, unsigned long arg)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: pca9540bdp_initialize
+ * Name: pca9540bdp_register
  *
  * Description:
  *   Register the PCA9540BDP character device as 'devpath'
@@ -323,12 +267,12 @@ static int pca9540bdp_ioctl(FAR struct file *filep, int cmd, unsigned long arg)
  *   is 0x70.
  *
  * Returned Value:
- *   Common i2c multiplexer device instance; NULL on failure.
+ *   Zero (OK) on success; a negated errno value on failure.
  *
  ****************************************************************************/
 
-FAR struct i2cmultiplexer_dev_s* pca9540bdp_initialize(FAR const char *devpath, FAR struct i2c_master_s *i2c,
-                   uint8_t addr)
+int pca9540bdp_register(FAR const char *devpath, FAR struct i2c_master_s *i2c,
+                        uint8_t addr)
 {
   FAR struct pca9540bdp_dev_s *priv;
   int ret;
@@ -342,40 +286,25 @@ FAR struct i2cmultiplexer_dev_s* pca9540bdp_initialize(FAR const char *devpath, 
   priv = (FAR struct pca9540bdp_dev_s *)kmm_malloc(sizeof(struct pca9540bdp_dev_s));
   if (priv == NULL)
     {
-      i2cerr("ERROR: Failed to allocate instance\n");
-      return NULL;
+      snerr("ERROR: Failed to allocate instance\n");
+      return -ENOMEM;
     }
 
-  priv->dev.ops    = &g_pca9540bdp_ops;
   priv->i2c        = i2c;
   priv->addr       = addr;
-  priv->state      = 0x00;  /* power on reset configuration */
+  priv->state      = 0x00;  // power on reset configuration
 
   /* Register the character driver */
 
   ret = register_driver(devpath, &g_pca9540bdpfops, 0666, priv);
   if (ret < 0)
     {
-      i2cerr("ERROR: Failed to register driver: %d\n", ret);
+      snerr("ERROR: Failed to register driver: %d\n", ret);
       kmm_free(priv);
-    }
-
-  if(pca9540bdp_select_port(priv, PCA9540BDP_SEL_PORT0) != OK)
-    {
-      i2cwarn("Could not select proper mux port\n");
-      kmm_free(priv);
-      return NULL;  /* signal error condition */
     }
 
   i2cinfo("PCA9549BDP (addr=0x%02x) registered at %s\n", priv->addr, devpath);
 
-  if(ret == OK)
-    {
-      return &priv->dev;
-    }
-  else
-    {
-      return NULL;
-    }
+  return ret;
 }
-#endif /* CONFIG_I2CMULTIPLEXER_PCA9540BDP */
+#endif /* CONFIG_I2C && CONFIG_PCA9549BDP */

@@ -1,7 +1,7 @@
 /****************************************************************************
- * include/nuttx/i2c/pca9540bdp.h
+ * /nuttx/drivers/i2c/pca9540bdp.h
  *
- *   Copyright (C) 2017 Giorgio Groß. All rights reserved.
+ *   Copyright (C) 2017 - 2018 Giorgio Groß. All rights reserved.
  *   Author: Giorgio Groß <giorgio.gross@robodev.eu>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,11 +40,9 @@
  ****************************************************************************/
 
 #include <nuttx/config.h>
-#include <sys/ioctl.h>
 #include <nuttx/i2c/i2c_master.h>
-#include <nuttx/i2c/i2cmultiplexer.h>
 
-#if defined(CONFIG_I2CMULTIPLEXER) && defined(CONFIG_I2CMULTIPLEXER_PCA9540BDP)
+#ifdef CONFIG_I2CMULTIPLEXER_PCA9540BDP
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -53,6 +51,13 @@
 #ifndef CONFIG_PCA9549BDP_I2C_FREQUENCY
 #  define CONFIG_PCA9549BDP_I2C_FREQUENCY   400000  /* 400 khz */
 #endif
+
+/* Bit Definitions to be passed to write calls */
+
+#define PCA9540BDP_ENABLE                   0x4
+#define PCA9540BDP_DISABLE                  0x0
+
+/* Bit masks */
 
 #define PCA9540BDP_CH_BITMASK               0x03
 #define PCA9540BDP_ENABLE_BITMASK           0x04
@@ -67,12 +72,18 @@
 
 struct pca9540bdp_dev_s
 {
-  struct i2cmultiplexer_dev_s dev;  /* Nested structure to allow casting as
-                                       public i2c multiplexer */
   FAR struct i2c_master_s *i2c; /* I2C interface */
   uint16_t addr;
   uint8_t state;  /* control register state */
 };
 
-#endif /* CONFIG_I2CMULTIPLEXER && CONFIG_I2CMULTIPLEXER_PCA9540BDP */
+struct i2c_port_dev_s
+{
+  FAR struct i2c_master_s vi2c;  /* Nested structure to allow casting as
+                                    public i2c master */
+  uint8_t port;  /* associated port on the mux */
+  FAR struct pca9540bdp_dev_s* dev;  /* associated device */
+};
+
+#endif /* CONFIG_I2CMULTIPLEXER_PCA9540BDP */
 #endif /* __DRIVERS_I2CMULTIPLEXER_PCA9540BDP_H */
