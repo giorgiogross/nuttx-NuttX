@@ -1,8 +1,12 @@
 /****************************************************************************
  * include/nuttx/i2c/pca9540bdp.h
  *
- *   Copyright (C) 2017 Giorgio Groß. All rights reserved.
+ *   Copyright (C) 2018 Giorgio Groß. All rights reserved.
  *   Author: Giorgio Groß <giorgio.gross@robodev.eu>
+ *
+ * References:
+ *   "PCA9540B 2-channel I2C-bus multiplexer product datasheet",
+ *   31 October 2016, NXP
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,8 +37,8 @@
  *
  ****************************************************************************/
 
-#ifndef __INCLUDE_NUTTX_I2C_PCA9540BDP_H
-#define __INCLUDE_NUTTX_I2C_PCA9540BDP_H
+#ifndef __INCLUDE_I2C_PCA9540BDP_H
+#define __INCLUDE_I2C_PCA9540BDP_H
 
 /****************************************************************************
  * Included Files
@@ -42,41 +46,23 @@
 
 #include <nuttx/config.h>
 #include <sys/ioctl.h>
-
-#if defined(CONFIG_I2C) && defined(CONFIG_PCA9540BDP)
+#include <nuttx/i2c/i2c_master.h>
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+#ifndef CONFIG_PCA9540BDP_BASEADDR
+#  define CONFIG_PCA9540BDP_BASEADDR          0x70
+#endif
 
-#define CONFIG_PCA9540BDP_BASEADDR          0x70
-
-/* Configuration Register Bit Definitions to be passed to ioctl calls */
-
-#define PCA9540BDP_SEL_CH0        0x0
-#define PCA9540BDP_SEL_CH1        0x1
-#define PCA9540BDP_ENABLE         0x4
-#define PCA9540BDP_DISABLE        0x0
-
-/* IOCTL Commands ***********************************************************/
-/* PCA9540BDPIOC_DISABLE
- *                    - disable all channels
- *   ioctl argument:  none
- *
- * PCA9540BDPIOC_SEL_CH
- *                    - Select channel
- *   ioctl argument:  One of PCA9540BDP_SEL_CH0, PCA9540BDP_SEL_CH1 or PCA9540BDP_SEL_NONE
- *
- */
-
-#define PCA9540BDPIOC_DISABLE     0x01
-#define PCA9540BDPIOC_SEL_CH      0x02
+#define PCA9540BDP_SEL_PORT0                0x0
+#define PCA9540BDP_SEL_PORT1                0x1
 
 /****************************************************************************
  * Public Types
  ****************************************************************************/
 
-struct i2c_master_s;
+struct pca9540bdp_dev_s;
 
 /****************************************************************************
  * Public Function Prototypes
@@ -90,30 +76,49 @@ extern "C"
 #define EXTERN extern
 #endif
 
+
 /****************************************************************************
- * Name: pca9540bdp_register
+ * Name: pca9540bdp_lower_half
  *
  * Description:
- *   Register the PCA9540BDP character device as 'devpath'
+ *   Initialize the lower half of the PCA9540BDP by creating a i2c_master_s
+ *   for the virtual i2c master and link it to the associated PCA9540BDP and
+ *   its port.
  *
  * Input Parameters:
- *   devpath - The full path to the driver to register. E.g., "/dev/pca0"
+ *   dev  - Pointer to the associated PCA9540BDP
+ *   port - The port number as defined in pca9540bdp.h
+ *
+ * Returned Value:
+ *   Common i2c multiplexer device instance; NULL on failure.
+ *
+ ****************************************************************************/
+
+FAR struct i2c_master_s* pca9540bdp_lower_half(FAR struct pca9540bdp_dev_s *dev,
+                                              uint8_t port);
+
+/****************************************************************************
+ * Name: pca9540bdp_initialize
+ *
+ * Description:
+ *   Initialize the PCA9540BDP device.
+ *
+ * Input Parameters:
  *   i2c - An instance of the I2C interface to use to communicate with PCA9540BDP
  *   addr - The I2C address of the PCA9540BDP.  The base I2C address of the PCA9540BDP
  *   is 0x70.
  *
  * Returned Value:
- *   Zero (OK) on success; a negated errno value on failure.
+ *   Common i2c multiplexer device instance; NULL on failure.
  *
  ****************************************************************************/
 
-int pca9540bdp_register(FAR const char *devpath, FAR struct i2c_master_s *i2c,
-                   uint8_t addr);
+FAR struct pca9540bdp_dev_s* pca9540bdp_initialize(FAR struct i2c_master_s *i2c,
+                    uint8_t addr);
 
 #undef EXTERN
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CONFIG_I2C && CONFIG_PCA9540BDP */
-#endif /* __INCLUDE_NUTTX_I2C_PCA9540BDP_H */
+#endif /* __INCLUDE_I2C_PCA9540BDP_H */
