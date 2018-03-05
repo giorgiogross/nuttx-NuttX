@@ -1,7 +1,7 @@
 ############################################################################
 # drivers/i2c/Make.defs
 #
-#   Copyright (C) 2018 Gregory Nutt. All rights reserved.
+#   Copyright (C) 2016, 2018 Gregory Nutt. All rights reserved.
 #   Author: Gregory Nutt <gnutt@nuttx.org>,
 #           Giorgio Gross <giorgio.gross@robodev.eu>
 #
