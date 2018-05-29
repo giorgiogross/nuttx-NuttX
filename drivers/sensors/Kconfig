@@ -35,12 +35,35 @@ config BH1750FVI_I2C_FREQUENCY
 	default 400000
 	depends on SENSORS_BH1750FVI
 
+config SENSORS_BMA2X2_LIB
+	bool "Bosch BMA2X2 Acceleration Sensor Library"
+	default n
+	select I2C
+	---help---
+		Enable driver support for Bosch BMA2X2 related sensors.
+
+config SENSORS_BMG160_LIB
+	bool "Bosch BMG160 Gyroscope Sensor Library"
+	default n
+	select I2C
+	---help---
+		Enable driver support for Bosch BMG160 related sensors.
+
 config SENSORS_BMG160
 	bool "Bosch BMG160 Gyroscope Sensor support"
 	default n
 	select SPI
 	---help---
 		Enable driver support for the Bosch BMG160 gyroscope sensor.
+
+config SENSORS_BMI055
+	bool "Bosch BMI055 Acceleration and Gyroscope sensor support"
+	default n
+	select I2C
+	depends on SENSORS_BMG160_LIB
+	depends on SENSORS_BMA2X2_LIB
+	---help---
+		Enable driver support for the Bosch BMI055 Acceleration and Gyroscope sensor.
 
 config SENSORS_BMP180
 	bool "Bosch BMP180 Barometer Sensor support"
