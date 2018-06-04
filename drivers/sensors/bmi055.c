@@ -274,32 +274,8 @@ static int bmi055_interrupt_handler(int irq, FAR void* arg, void* context)
    * SPI bus from within an interrupt.
    */
 
-  // FAR struct bmi055_dev_s *priv = (struct bmi055_dev_s*) arg;
-  // int ret;
-
-  // DEBUGASSERT(priv->work.worker == NULL);
-  // ret = work_queue(HPWORK, &priv->work, bmi055_worker, priv, 0);
-  // if (ret < 0)
-  //   {
-  //     snerr("ERROR: Failed to queue work: %d\n", ret);
-  //     return ret;
-  //   }
-
-  return OK;
+  return -ENOSYS;
 }
-
-/****************************************************************************
- * Name: bmi055_worker  // TODO interrupts are not implemented yet
- ****************************************************************************/
-
-// static void bmi055_worker(FAR void *arg)
-// {
-//   FAR struct bmi055_dev_s *priv = (FAR struct bmi055_dev_s *)(arg);
-//   DEBUGASSERT(priv != NULL);*/
-
-  /* Read out the latest sensor data */
-
-// }
 
 /****************************************************************************
  * Name: bmi055_ioctl
